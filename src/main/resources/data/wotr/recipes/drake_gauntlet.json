@@ -1,0 +1,31 @@
+{
+	"type": "minecraft:crafting_shaped",
+	"pattern": [
+		"xyx",
+		"zaz",
+		"bcb"
+	],
+	"key": {
+		"x": {
+			"item": "minecraft:blaze_powder"
+		},
+		"y": {
+			"item": "wotr:drake_skull"
+		},
+		"z": {
+			"item": "minecraft:leather"
+		},
+		"a": {
+			"item": "minecraft:fire_charge"
+		},
+		"b": {
+			"item": "minecraft:iron_ingot"
+		},
+		"c": {
+			"item": "minecraft:magma_cream"
+		}
+	},
+	"result": {
+		"item": "wotr:drake_gauntlet"
+	}
+}

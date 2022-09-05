@@ -1,0 +1,18 @@
+{
+	"type": "minecraft:crafting_shaped",
+	"pattern": [
+		"xxx",
+		"y"
+	],
+	"key": {
+		"x": {
+			"item": "minecraft:gold_ingot"
+		},
+		"y": {
+			"item": "minecraft:golden_horse_armor"
+		}
+	},
+	"result": {
+		"item": "wotr:drake_armor_gold"
+	}
+}

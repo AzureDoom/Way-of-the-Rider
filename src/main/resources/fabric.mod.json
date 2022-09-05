@@ -1,0 +1,37 @@
+{
+	"schemaVersion": 1,
+	"id": "wotr",
+	"version": "${version}",
+	"name": "The Way of The Rider",
+	"description": "This is an example description! Tell everyone what your mod is about!",
+	"authors": [
+		"AzureDoom, Wolverbyte"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "CC-BY-NC-ND-4",
+	"icon": "assets/wotr/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"mod.azure.wotr.WoTRMod"
+		],
+		"client": [
+			"mod.azure.wotr.client.WoTRClientMod"
+		]
+	},
+	"mixins": [
+		"wotr.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.14.8",
+		"fabric": "*",
+		"minecraft": ">=1.19.1",
+		"java": ">=17"
+	},
+	"suggests": {
+		"another-mod": "*"
+	}
+}

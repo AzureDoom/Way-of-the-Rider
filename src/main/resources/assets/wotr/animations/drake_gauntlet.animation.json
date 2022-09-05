@@ -1,0 +1,16 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"firing": {
+			"animation_length": 0.52,
+			"bones": {
+				"lowJaw": {
+					"rotation": {
+						"vector": [27.5, 0, 0]
+					}
+				}
+			}
+		}
+	},
+	"geckolib_format_version": 2
+}

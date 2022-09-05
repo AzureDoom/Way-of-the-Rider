@@ -1,0 +1,18 @@
+{
+	"type": "minecraft:crafting_shaped",
+	"pattern": [
+		"xxx",
+		"y"
+	],
+	"key": {
+		"x": {
+			"item": "minecraft:iron_ingot"
+		},
+		"y": {
+			"item": "minecraft:iron_horse_armor"
+		}
+	},
+	"result": {
+		"item": "wotr:drake_armor_iron"
+	}
+}
