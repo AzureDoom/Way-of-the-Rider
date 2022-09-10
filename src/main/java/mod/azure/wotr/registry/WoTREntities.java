@@ -19,14 +19,14 @@ public class WoTREntities {
 
 	public static final EntityType<DrakeEntity> DRAKE = Registry.register(Registry.ENTITY_TYPE,
 			new Identifier(WoTRMod.MODID, "drake"), FabricEntityTypeBuilder.create(SpawnGroup.MONSTER, DrakeEntity::new)
-					.dimensions(EntityDimensions.fixed(2.3f, 2.15F)).trackRangeBlocks(90).trackedUpdateRate(4).build());
+					.dimensions(EntityDimensions.fixed(2.3f, 2.15F)).trackRangeBlocks(90).trackedUpdateRate(1).build());
 
 	public static EntityType<DrakeGauntletFireProjectile> DRAKE_GAUNTLET_FIRE = Registry.register(Registry.ENTITY_TYPE,
 			new Identifier(WoTRMod.MODID, "drake_gauntlet_fire"),
 			FabricEntityTypeBuilder
 					.<DrakeGauntletFireProjectile>create(SpawnGroup.MISC, DrakeGauntletFireProjectile::new)
 					.dimensions(new EntityDimensions(1.5F, 1.5F, false)).disableSummon().spawnableFarFromPlayer()
-					.fireImmune().trackRangeBlocks(90).trackedUpdateRate(40).build());
+					.fireImmune().trackRangeBlocks(90).trackedUpdateRate(1).build());
 
 	public static EntityType<DrakeFireProjectile> DRAKE_FIRE = Registry.register(Registry.ENTITY_TYPE,
 			new Identifier(WoTRMod.MODID, "drake_fire"),
