@@ -1,36 +1,37 @@
 package mod.azure.wotr.client.render.entities.projectiles;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+
 import mod.azure.wotr.WoTRMod;
 import mod.azure.wotr.entity.projectiles.mobs.DrakeFireProjectile;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.entity.EntityRenderer;
-import net.minecraft.client.render.entity.EntityRendererFactory;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 
 public class DrakeFireProjectiletRender extends EntityRenderer<DrakeFireProjectile> {
 
-	public DrakeFireProjectiletRender(EntityRendererFactory.Context renderManagerIn) {
+	public DrakeFireProjectiletRender(EntityRendererProvider.Context renderManagerIn) {
 		super(renderManagerIn);
 	}
 
 	@Override
-	public Identifier getTexture(DrakeFireProjectile entity) {
-		return new Identifier(WoTRMod.MODID, "textures/item/empty.png");
+	public ResourceLocation getTextureLocation(DrakeFireProjectile entity) {
+		return new ResourceLocation(WoTRMod.MODID, "textures/item/empty.png");
 	}
 
 	@Override
-	public void render(DrakeFireProjectile persistentProjectileEntity, float f, float g, MatrixStack matrixStack,
-			VertexConsumerProvider vertexConsumerProvider, int i) {
+	public void render(DrakeFireProjectile persistentProjectileEntity, float f, float g, PoseStack matrixStack,
+			MultiBufferSource vertexConsumerProvider, int i) {
 		super.render(persistentProjectileEntity, f, g, matrixStack, vertexConsumerProvider, i);
-		matrixStack.push();
+		matrixStack.pushPose();
 		matrixStack.scale(0, 0, 0);
-		matrixStack.pop();
+		matrixStack.popPose();
 	}
 
 	@Override
-	protected int getBlockLight(DrakeFireProjectile entityIn, BlockPos partialTicks) {
+	protected int getBlockLightLevel(DrakeFireProjectile entityIn, BlockPos partialTicks) {
 		return 15;
 	}
 

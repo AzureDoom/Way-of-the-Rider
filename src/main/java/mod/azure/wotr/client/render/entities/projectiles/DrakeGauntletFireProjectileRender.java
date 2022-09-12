@@ -1,19 +1,20 @@
 package mod.azure.wotr.client.render.entities.projectiles;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+
 import mod.azure.wotr.client.models.entities.DrakeGauntletFireProjectileModel;
 import mod.azure.wotr.entity.projectiles.items.DrakeGauntletFireProjectile;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.entity.EntityRendererFactory;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import software.bernie.geckolib3.renderers.geo.GeoProjectilesRenderer;
 
 public class DrakeGauntletFireProjectileRender extends GeoProjectilesRenderer<DrakeGauntletFireProjectile> {
 
-	public DrakeGauntletFireProjectileRender(EntityRendererFactory.Context renderManagerIn) {
+	public DrakeGauntletFireProjectileRender(EntityRendererProvider.Context renderManagerIn) {
 		super(renderManagerIn, new DrakeGauntletFireProjectileModel());
 	}
 
@@ -22,10 +23,10 @@ public class DrakeGauntletFireProjectileRender extends GeoProjectilesRenderer<Dr
 	}
 
 	@Override
-	public RenderLayer getRenderType(DrakeGauntletFireProjectile animatable, float partialTicks, MatrixStack stack,
-			VertexConsumerProvider renderTypeBuffer, VertexConsumer vertexBuilder, int packedLightIn,
-			Identifier textureLocation) {
-		return RenderLayer.getEntityTranslucent(getTextureResource(animatable));
+	public RenderType getRenderType(DrakeGauntletFireProjectile animatable, float partialTicks, PoseStack stack,
+			MultiBufferSource renderTypeBuffer, VertexConsumer vertexBuilder, int packedLightIn,
+			ResourceLocation textureLocation) {
+		return RenderType.entityTranslucent(getTextureResource(animatable));
 	}
 
 }

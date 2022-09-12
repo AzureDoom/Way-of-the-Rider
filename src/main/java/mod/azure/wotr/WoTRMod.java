@@ -8,14 +8,15 @@ import mod.azure.wotr.registry.WoTRBlocks;
 import mod.azure.wotr.registry.WoTREntities;
 import mod.azure.wotr.registry.WoTRItems;
 import mod.azure.wotr.registry.WoTRSounds;
+import mod.azure.wotr.registry.WoTRStructures;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.itemgroup.FabricItemGroupBuilder;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
-import net.minecraft.item.ItemGroup;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.ItemStack;
 
 public class WoTRMod implements ModInitializer {
 
@@ -24,8 +25,8 @@ public class WoTRMod implements ModInitializer {
 	public static WoTRBlocks BLOCKS;
 	public static WoTREntities ENTITIES;
 	public static final String MODID = "wotr";
-	public static final Identifier RELOAD = new Identifier(MODID, "reload");
-	public static final ItemGroup WoTRItemGroup = FabricItemGroupBuilder.create(new Identifier(MODID, "wotr"))
+	public static final ResourceLocation RELOAD = new ResourceLocation(MODID, "reload");
+	public static final CreativeModeTab WoTRItemGroup = FabricItemGroupBuilder.create(new ResourceLocation(MODID, "wotr"))
 			.icon(() -> new ItemStack(WoTRItems.DRAKE_SKULL)).build();
 
 	@Override
@@ -35,11 +36,12 @@ public class WoTRMod implements ModInitializer {
 		BLOCKS = new WoTRBlocks();
 		SOUNDS = new WoTRSounds();
 		ENTITIES = new WoTREntities();
+		WoTRStructures.registerStructureFeatures();
 		FabricDefaultAttributeRegistry.register(WoTREntities.DRAKE, DrakeEntity.createMobAttributes());
 		ServerPlayNetworking.registerGlobalReceiver(WoTRMod.RELOAD,
 				(server, player, serverPlayNetworkHandler, inputPacket, packetSender) -> {
-					if (player.getMainHandStack().getItem() instanceof DrakeGauntletItem) {
-						((DrakeGauntletItem) player.getMainHandStack().getItem()).reload(player, Hand.MAIN_HAND);
+					if (player.getMainHandItem().getItem() instanceof DrakeGauntletItem) {
+						((DrakeGauntletItem) player.getMainHandItem().getItem()).reload(player, InteractionHand.MAIN_HAND);
 					}
 					;
 				});

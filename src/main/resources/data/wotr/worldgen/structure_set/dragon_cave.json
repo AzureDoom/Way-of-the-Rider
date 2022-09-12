@@ -1,0 +1,14 @@
+{
+	"structures": [
+		{
+			"structure": "wotr:dragon_cave",
+			"weight": 1
+		}
+	],
+	"placement": {
+		"salt": 1234567881,
+		"spacing": 80,
+		"separation": 20,
+		"type": "minecraft:random_spread"
+	}
+}

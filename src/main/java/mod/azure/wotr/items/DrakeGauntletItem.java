@@ -10,27 +10,29 @@ import mod.azure.wotr.entity.projectiles.items.DrakeGauntletFireProjectile;
 import mod.azure.wotr.registry.WoTRBlocks;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.client.item.TooltipContext;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Hand;
-import net.minecraft.util.TypedActionResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.world.World;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.SwordItem;
+import net.minecraft.world.item.Tiers;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import software.bernie.geckolib3.core.AnimationState;
 import software.bernie.geckolib3.core.IAnimatable;
 import software.bernie.geckolib3.core.PlayState;
@@ -43,7 +45,7 @@ import software.bernie.geckolib3.network.GeckoLibNetwork;
 import software.bernie.geckolib3.network.ISyncable;
 import software.bernie.geckolib3.util.GeckoLibUtil;
 
-public class DrakeGauntletItem extends Item implements IAnimatable, ISyncable {
+public class DrakeGauntletItem extends SwordItem implements IAnimatable, ISyncable {
 
 	private BlockPos lightBlockPos = null;
 	public AnimationFactory factory = new AnimationFactory(this);
@@ -51,20 +53,20 @@ public class DrakeGauntletItem extends Item implements IAnimatable, ISyncable {
 	public static final int ANIM_OPEN = 0;
 
 	public DrakeGauntletItem() {
-		super(new Item.Settings().maxCount(1).maxDamage(11).group(WoTRMod.WoTRItemGroup));
+		super(Tiers.DIAMOND, 20, -3.0F, new Item.Properties().stacksTo(1).durability(11).tab(WoTRMod.WoTRItemGroup));
 		GeckoLibNetwork.registerSyncable(this);
 	}
 
-	public void removeAmmo(Item ammo, PlayerEntity playerEntity) {
+	public void removeAmmo(Item ammo, Player playerEntity) {
 		if (!playerEntity.isCreative()) {
-			for (ItemStack item : playerEntity.getInventory().offHand) {
+			for (ItemStack item : playerEntity.getInventory().offhand) {
 				if (item.getItem() == ammo) {
-					item.setDamage(item.getDamage() - 1);
+					item.setDamageValue(item.getDamageValue() - 1);
 					break;
 				}
-				for (ItemStack item1 : playerEntity.getInventory().main) {
+				for (ItemStack item1 : playerEntity.getInventory().items) {
 					if (item1.getItem() == ammo) {
-						item.setDamage(item.getDamage() - 1);
+						item.setDamageValue(item.getDamageValue() - 1);
 						break;
 					}
 				}
@@ -73,7 +75,7 @@ public class DrakeGauntletItem extends Item implements IAnimatable, ISyncable {
 	}
 
 	@Override
-	public boolean hasGlint(ItemStack stack) {
+	public boolean isFoil(ItemStack stack) {
 		return false;
 	}
 
@@ -83,34 +85,28 @@ public class DrakeGauntletItem extends Item implements IAnimatable, ISyncable {
 	}
 
 	@Override
-	public boolean canRepair(ItemStack stack, ItemStack ingredient) {
-		return super.canRepair(stack, ingredient);
+	public void appendHoverText(ItemStack stack, Level world, List<Component> tooltip, TooltipFlag context) {
+		tooltip.add(Component.translatable(
+				"Fuel: " + (stack.getMaxDamage() - stack.getDamageValue() - 1) + " / " + (stack.getMaxDamage() - 1))
+				.withStyle(ChatFormatting.ITALIC));
+		tooltip.add(Component.translatable(WoTRMod.MODID + ".ammo.reloaddrake").withStyle(ChatFormatting.ITALIC));
 	}
 
 	@Override
-	public void appendTooltip(ItemStack stack, World world, List<Text> tooltip, TooltipContext context) {
-		tooltip.add(Text
-				.translatable(
-						"Fuel: " + (stack.getMaxDamage() - stack.getDamage() - 1) + " / " + (stack.getMaxDamage() - 1))
-				.formatted(Formatting.ITALIC));
-		tooltip.add(Text.translatable(WoTRMod.MODID + ".ammo.reloaddrake").formatted(Formatting.ITALIC));
-	}
-
-	@Override
-	public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand) {
-		ItemStack itemStack = user.getStackInHand(hand);
-		user.setCurrentHand(hand);
-		return TypedActionResult.consume(itemStack);
+	public InteractionResultHolder<ItemStack> use(Level world, Player user, InteractionHand hand) {
+		ItemStack itemStack = user.getItemInHand(hand);
+		user.startUsingItem(hand);
+		return InteractionResultHolder.consume(itemStack);
 	}
 
 	protected void spawnLightSource(Entity entity, boolean isInWaterBlock) {
 		if (lightBlockPos == null) {
-			lightBlockPos = findFreeSpace(entity.world, entity.getBlockPos(), 2);
+			lightBlockPos = findFreeSpace(entity.level, entity.blockPosition(), 2);
 			if (lightBlockPos == null)
 				return;
-			entity.world.setBlockState(lightBlockPos, WoTRBlocks.TICKING_LIGHT_BLOCK.getDefaultState());
-		} else if (checkDistance(lightBlockPos, entity.getBlockPos(), 2)) {
-			BlockEntity blockEntity = entity.world.getBlockEntity(lightBlockPos);
+			entity.level.setBlockAndUpdate(lightBlockPos, WoTRBlocks.TICKING_LIGHT_BLOCK.defaultBlockState());
+		} else if (checkDistance(lightBlockPos, entity.blockPosition(), 2)) {
+			BlockEntity blockEntity = entity.level.getBlockEntity(lightBlockPos);
 			if (blockEntity instanceof TickingLightEntity) {
 				((TickingLightEntity) blockEntity).refresh(isInWaterBlock ? 20 : 0);
 			} else
@@ -125,7 +121,7 @@ public class DrakeGauntletItem extends Item implements IAnimatable, ISyncable {
 				&& Math.abs(blockPosA.getZ() - blockPosB.getZ()) <= distance;
 	}
 
-	private BlockPos findFreeSpace(World world, BlockPos blockPos, int maxDistance) {
+	private BlockPos findFreeSpace(Level world, BlockPos blockPos, int maxDistance) {
 		if (blockPos == null)
 			return null;
 
@@ -138,7 +134,7 @@ public class DrakeGauntletItem extends Item implements IAnimatable, ISyncable {
 		for (int x : offsets)
 			for (int y : offsets)
 				for (int z : offsets) {
-					BlockPos offsetPos = blockPos.add(x, y, z);
+					BlockPos offsetPos = blockPos.offset(x, y, z);
 					BlockState state = world.getBlockState(offsetPos);
 					if (state.isAir() || state.getBlock().equals(WoTRBlocks.TICKING_LIGHT_BLOCK))
 						return offsetPos;
@@ -173,97 +169,96 @@ public class DrakeGauntletItem extends Item implements IAnimatable, ISyncable {
 	}
 
 	@Override
-	public void inventoryTick(ItemStack stack, World world, Entity entity, int slot, boolean selected) {
-		if (world.isClient) {
-			if (((PlayerEntity) entity).getMainHandStack().getItem() instanceof DrakeGauntletItem) {
-				if (WoTRClientMod.reload.isPressed() && selected) {
-					PacketByteBuf passedData = new PacketByteBuf(Unpooled.buffer());
+	public void inventoryTick(ItemStack stack, Level world, Entity entity, int slot, boolean selected) {
+		if (world.isClientSide()) {
+			if (((Player) entity).getMainHandItem().getItem() instanceof DrakeGauntletItem) {
+				if (WoTRClientMod.reload.isDown() && selected) {
+					FriendlyByteBuf passedData = new FriendlyByteBuf(Unpooled.buffer());
 					passedData.writeBoolean(true);
 					ClientPlayNetworking.send(WoTRMod.RELOAD, passedData);
-					world.playSound((PlayerEntity) null, entity.getX(), entity.getY(), entity.getZ(),
-							SoundEvents.ITEM_FIRECHARGE_USE, SoundCategory.PLAYERS, 1.0F, 1.5F);
+					world.playSound((Player) null, entity.getX(), entity.getY(), entity.getZ(),
+							SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 1.0F, 1.5F);
 				}
 			}
 		}
 	}
 
-	public void reload(PlayerEntity user, Hand hand) {
-		if (user.getStackInHand(hand).getItem() instanceof DrakeGauntletItem) {
-			while (!user.isCreative() && user.getStackInHand(hand).getDamage() != 0
-					&& user.getInventory().count(Items.FLINT_AND_STEEL) > 0) {
+	public void reload(Player user, InteractionHand hand) {
+		if (user.getItemInHand(hand).getItem() instanceof DrakeGauntletItem) {
+			while (!user.isCreative() && user.getItemInHand(hand).getDamageValue() != 0
+					&& user.getInventory().countItem(Items.FLINT_AND_STEEL) > 0) {
 				removeAmmo(Items.FLINT_AND_STEEL, user);
-				user.getStackInHand(hand).damage(-10, user, s -> user.sendToolBreakStatus(hand));
-				user.getStackInHand(hand).setBobbingAnimationTime(3);
+				user.getItemInHand(hand).hurtAndBreak(-10, user, s -> user.broadcastBreakEvent(hand));
+				user.getItemInHand(hand).setPopTime(3);
 			}
 		}
 	}
 
 	@Override
-	public void onStoppedUsing(ItemStack stack, World worldIn, LivingEntity entityLiving, int remainingUseTicks) {
-		if (entityLiving instanceof PlayerEntity) {
-			PlayerEntity playerentity = (PlayerEntity) entityLiving;
-			if (stack.getDamage() < (stack.getMaxDamage() - 1)) {
-				playerentity.getItemCooldownManager().set(this, 25);
-				stack.damage(1, entityLiving, p -> p.sendToolBreakStatus(entityLiving.getActiveHand()));
+	public void releaseUsing(ItemStack stack, Level worldIn, LivingEntity entityLiving, int remainingUseTicks) {
+		if (entityLiving instanceof Player) {
+			Player playerentity = (Player) entityLiving;
+			if (stack.getDamageValue() < (stack.getMaxDamage() - 1)) {
+				playerentity.getCooldowns().addCooldown(this, 25);
+				stack.hurtAndBreak(1, entityLiving, p -> p.broadcastBreakEvent(entityLiving.getUsedItemHand()));
 			}
 		}
 	}
 
 	@Override
-	public void usageTick(World worldIn, LivingEntity entityLiving, ItemStack stack, int count) {
-		if (entityLiving instanceof PlayerEntity) {
-			PlayerEntity playerentity = (PlayerEntity) entityLiving;
-			if (stack.getDamage() < (stack.getMaxDamage() - 1)) {
-				if (!worldIn.isClient) {
+	public void onUseTick(Level worldIn, LivingEntity entityLiving, ItemStack stack, int count) {
+		if (entityLiving instanceof Player) {
+			Player playerentity = (Player) entityLiving;
+			if (stack.getDamageValue() < (stack.getMaxDamage() - 1)) {
+				if (!worldIn.isClientSide()) {
 					DrakeGauntletFireProjectile abstractarrowentity = createArrow(worldIn, stack, playerentity);
-					abstractarrowentity.setVelocity(playerentity, playerentity.getPitch(), playerentity.getYaw(), 0.0F,
+					abstractarrowentity.shootFromRotation(playerentity, playerentity.getXRot(), playerentity.getYRot(), 0.0F,
 							0.25F * 3.0F, 2.0F);
-					abstractarrowentity.refreshPositionAndAngles(entityLiving.getX(), entityLiving.getBodyY(0.5),
-							entityLiving.getZ(), 0, 0);
-					abstractarrowentity.age = 30;
-					worldIn.spawnEntity(abstractarrowentity);
-					final int id = GeckoLibUtil.guaranteeIDForStack(stack, (ServerWorld) worldIn);
+					abstractarrowentity.moveTo(entityLiving.getX(), entityLiving.getY(0.5), entityLiving.getZ(), 0, 0);
+					abstractarrowentity.tickCount = 30;
+					worldIn.addFreshEntity(abstractarrowentity);
+					final int id = GeckoLibUtil.guaranteeIDForStack(stack, (ServerLevel) worldIn);
 					GeckoLibNetwork.syncAnimation(playerentity, this, id, ANIM_OPEN);
-					for (PlayerEntity otherPlayer : PlayerLookup.tracking(playerentity)) {
+					for (Player otherPlayer : PlayerLookup.tracking(playerentity)) {
 						GeckoLibNetwork.syncAnimation(otherPlayer, this, id, ANIM_OPEN);
 					}
-					worldIn.playSound((PlayerEntity) null, playerentity.getX(), playerentity.getY(),
-							playerentity.getZ(), SoundEvents.BLOCK_CAMPFIRE_CRACKLE, SoundCategory.PLAYERS, 1.0F,
+					worldIn.playSound((Player) null, playerentity.getX(), playerentity.getY(), playerentity.getZ(),
+							SoundEvents.CAMPFIRE_CRACKLE, SoundSource.PLAYERS, 1.0F,
 							1.0F / (worldIn.random.nextFloat() * 0.4F + 1.2F) + 1F * 0.5F);
-					boolean isInsideWaterBlock = playerentity.world.isWater(playerentity.getBlockPos());
+					boolean isInsideWaterBlock = playerentity.level.isWaterAt(playerentity.blockPosition());
 					spawnLightSource(entityLiving, isInsideWaterBlock);
 				}
 			}
 		}
 	}
 
-	public DrakeGauntletFireProjectile createArrow(World worldIn, ItemStack stack, LivingEntity shooter) {
+	public DrakeGauntletFireProjectile createArrow(Level worldIn, ItemStack stack, LivingEntity shooter) {
 		DrakeGauntletFireProjectile arrowentity = new DrakeGauntletFireProjectile(worldIn, shooter);
 		return arrowentity;
 	}
 
 	@Override
-	public boolean postHit(ItemStack stack, LivingEntity target, LivingEntity miner) {
-		if (miner instanceof PlayerEntity) {
-			PlayerEntity playerentity = (PlayerEntity) miner;
-			if (stack.getDamage() < (stack.getMaxDamage() - 1)) {
-				if (!playerentity.getItemCooldownManager().isCoolingDown(this)
-						&& playerentity.getMainHandStack().getItem() instanceof DrakeGauntletItem) {
-					playerentity.getItemCooldownManager().set(this, 20);
-					final Box aabb = new Box(playerentity.getBlockPos().up()).expand(2D, 1D, 2D);
-					playerentity.getEntityWorld().getOtherEntities(playerentity, aabb)
+	public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity miner) {
+		if (miner instanceof Player) {
+			Player playerentity = (Player) miner;
+			if (stack.getDamageValue() < (stack.getMaxDamage() - 1)) {
+				if (!playerentity.getCooldowns().isOnCooldown(this)
+						&& playerentity.getMainHandItem().getItem() instanceof DrakeGauntletItem) {
+					playerentity.getCooldowns().addCooldown(this, 20);
+					final AABB aabb = new AABB(playerentity.blockPosition().above()).inflate(2D, 1D, 2D);
+					playerentity.getCommandSenderWorld().getEntities(playerentity, aabb)
 							.forEach(e -> doDamage(playerentity, e));
-					stack.damage(1, playerentity, p -> p.sendToolBreakStatus(playerentity.getActiveHand()));
+					stack.hurtAndBreak(1, playerentity, p -> p.broadcastBreakEvent(playerentity.getUsedItemHand()));
 				}
 			}
 		}
-		return super.postHit(stack, target, miner);
+		return super.hurtEnemy(stack, target, miner);
 	}
 
 	private void doDamage(LivingEntity user, Entity target) {
 		if (target instanceof LivingEntity) {
-			target.timeUntilRegen = 0;
-			target.damage(DamageSource.player((PlayerEntity) user), 9F);
+			target.invulnerableTime = 0;
+			target.hurt(DamageSource.playerAttack((Player) user), 9F);
 		}
 	}
 

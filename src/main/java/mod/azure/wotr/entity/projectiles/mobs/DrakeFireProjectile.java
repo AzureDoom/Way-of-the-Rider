@@ -8,71 +8,71 @@ import mod.azure.wotr.registry.WoTRBlocks;
 import mod.azure.wotr.registry.WoTREntities;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.block.AbstractFireBlock;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.entity.projectile.ExplosiveProjectileEntity;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.Packet;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.EntityHitResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.GameRules;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.projectile.AbstractHurtingProjectile;
+import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.BaseFireBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
 
-public class DrakeFireProjectile extends ExplosiveProjectileEntity {
+public class DrakeFireProjectile extends AbstractHurtingProjectile {
 
 	protected int timeInAir;
 	protected boolean inAir;
 	private int ticksInAir;
 	private BlockPos lightBlockPos = null;
 
-	public DrakeFireProjectile(EntityType<? extends DrakeFireProjectile> entityType, World world) {
+	public DrakeFireProjectile(EntityType<? extends DrakeFireProjectile> entityType, Level world) {
 		super(entityType, world);
 	}
 
-	public DrakeFireProjectile(World worldIn, LivingEntity shooter, double accelX, double accelY, double accelZ) {
+	public DrakeFireProjectile(Level worldIn, LivingEntity shooter, double accelX, double accelY, double accelZ) {
 		super(WoTREntities.DRAKE_FIRE, shooter, accelX, accelY, accelZ, worldIn);
 	}
 
-	public DrakeFireProjectile(World worldIn, double x, double y, double z, double accelX, double accelY,
+	public DrakeFireProjectile(Level worldIn, double x, double y, double z, double accelX, double accelY,
 			double accelZ) {
 		super(WoTREntities.DRAKE_FIRE, x, y, z, accelX, accelY, accelZ, worldIn);
 	}
 
 	@Override
-	public Packet<?> createSpawnPacket() {
+	public Packet<?> getAddEntityPacket() {
 		return EntityPacket.createPacket(this);
 	}
 
 	@Override
-	public void setVelocity(double x, double y, double z, float speed, float divergence) {
-		super.setVelocity(x, y, z, speed, divergence);
+	public void shoot(double x, double y, double z, float speed, float divergence) {
+		super.shoot(x, y, z, speed, divergence);
 		this.ticksInAir = 0;
 	}
 
 	@Override
-	public void writeCustomDataToNbt(NbtCompound tag) {
-		super.writeCustomDataToNbt(tag);
+	public void addAdditionalSaveData(CompoundTag tag) {
+		super.addAdditionalSaveData(tag);
 		tag.putShort("life", (short) this.ticksInAir);
 	}
 
 	@Override
-	public void readCustomDataFromNbt(NbtCompound tag) {
-		super.readCustomDataFromNbt(tag);
+	public void readAdditionalSaveData(CompoundTag tag) {
+		super.readAdditionalSaveData(tag);
 		this.ticksInAir = tag.getShort("life");
 	}
 
 	@Override
-	public boolean hasNoGravity() {
-		if (this.isSubmergedInWater()) {
+	public boolean isNoGravity() {
+		if (this.isUnderWater()) {
 			return false;
 		} else {
 			return true;
@@ -85,25 +85,25 @@ public class DrakeFireProjectile extends ExplosiveProjectileEntity {
 		if (this.ticksInAir >= 80) {
 			this.remove(Entity.RemovalReason.DISCARDED);
 		}
-		boolean isInsideWaterBlock = world.isWater(getBlockPos());
+		boolean isInsideWaterBlock = level.isWaterAt(blockPosition());
 		spawnLightSource(isInsideWaterBlock);
-		if (this.world.isClient && this.age > 5) {
-			double d2 = this.getX() + (this.random.nextDouble() * 2.0D - 1.0D) * (double) this.getWidth() * 0.5D;
+		if (this.level.isClientSide() && this.tickCount > 5) {
+			double d2 = this.getX() + (this.random.nextDouble() * 2.0D - 1.0D) * (double) this.getBbWidth() * 0.5D;
 			double e2 = this.getY() + 0.05D + this.random.nextDouble();
-			double f2 = this.getZ() + (this.random.nextDouble() * 2.0D - 1.0D) * (double) this.getWidth() * 0.5D;
-			this.world.addParticle(ParticleTypes.FLAME, true, d2, e2, f2, 0, 0, 0);
-			this.world.addParticle(ParticleTypes.SMOKE, true, d2, e2, f2, 0, 0, 0);
+			double f2 = this.getZ() + (this.random.nextDouble() * 2.0D - 1.0D) * (double) this.getBbWidth() * 0.5D;
+			this.level.addParticle(ParticleTypes.FLAME, true, d2, e2, f2, 0, 0, 0);
+			this.level.addParticle(ParticleTypes.SMOKE, true, d2, e2, f2, 0, 0, 0);
 		}
 	}
 
 	private void spawnLightSource(boolean isInWaterBlock) {
 		if (lightBlockPos == null) {
-			lightBlockPos = findFreeSpace(world, getBlockPos(), 2);
+			lightBlockPos = findFreeSpace(level, blockPosition(), 2);
 			if (lightBlockPos == null)
 				return;
-			world.setBlockState(lightBlockPos, WoTRBlocks.TICKING_LIGHT_BLOCK.getDefaultState());
-		} else if (checkDistance(lightBlockPos, getBlockPos(), 2)) {
-			BlockEntity blockEntity = world.getBlockEntity(lightBlockPos);
+			level.setBlockAndUpdate(lightBlockPos, WoTRBlocks.TICKING_LIGHT_BLOCK.defaultBlockState());
+		} else if (checkDistance(lightBlockPos, blockPosition(), 2)) {
+			BlockEntity blockEntity = level.getBlockEntity(lightBlockPos);
 			if (blockEntity instanceof TickingLightEntity) {
 				((TickingLightEntity) blockEntity).refresh(isInWaterBlock ? 20 : 0);
 			} else
@@ -118,7 +118,7 @@ public class DrakeFireProjectile extends ExplosiveProjectileEntity {
 				&& Math.abs(blockPosA.getZ() - blockPosB.getZ()) <= distance;
 	}
 
-	private BlockPos findFreeSpace(World world, BlockPos blockPos, int maxDistance) {
+	private BlockPos findFreeSpace(Level world, BlockPos blockPos, int maxDistance) {
 		if (blockPos == null)
 			return null;
 
@@ -131,7 +131,7 @@ public class DrakeFireProjectile extends ExplosiveProjectileEntity {
 		for (int x : offsets)
 			for (int y : offsets)
 				for (int z : offsets) {
-					BlockPos offsetPos = blockPos.add(x, y, z);
+					BlockPos offsetPos = blockPos.offset(x, y, z);
 					BlockState state = world.getBlockState(offsetPos);
 					if (state.isAir() || state.getBlock().equals(WoTRBlocks.TICKING_LIGHT_BLOCK))
 						return offsetPos;
@@ -141,47 +141,47 @@ public class DrakeFireProjectile extends ExplosiveProjectileEntity {
 	}
 
 	@Override
-	protected void onBlockHit(BlockHitResult blockHitResult) {
+	protected void onHitBlock(BlockHitResult blockHitResult) {
 		BlockPos blockPos;
-		super.onBlockHit(blockHitResult);
-		if (this.world.isClient) {
+		super.onHitBlock(blockHitResult);
+		if (this.level.isClientSide()) {
 			return;
 		}
 		Entity entity = this.getOwner();
-		if ((!(entity instanceof MobEntity) || this.world.getGameRules().getBoolean(GameRules.DO_MOB_GRIEFING))
-				&& this.world.isAir(blockPos = blockHitResult.getBlockPos().offset(blockHitResult.getSide()))) {
-			this.world.setBlockState(blockPos, AbstractFireBlock.getState(this.world, blockPos));
+		if ((!(entity instanceof Mob) || this.level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) && this.level
+				.isEmptyBlock(blockPos = blockHitResult.getBlockPos().relative(blockHitResult.getDirection()))) {
+			this.level.setBlockAndUpdate(blockPos, BaseFireBlock.getState(this.level, blockPos));
 		}
 	}
 
 	@Override
-	protected void onCollision(HitResult result) {
-		super.onCollision(result);
-		if (!this.world.isClient) {
+	protected void onHit(HitResult result) {
+		super.onHit(result);
+		if (!this.level.isClientSide()) {
 			this.remove(Entity.RemovalReason.DISCARDED);
 		}
 	}
 
 	@Override
-	protected void onEntityHit(EntityHitResult entityHitResult) {
-		super.onEntityHit(entityHitResult);
-		if (!this.world.isClient) {
+	protected void onHitEntity(EntityHitResult entityHitResult) {
+		super.onHitEntity(entityHitResult);
+		if (!this.level.isClientSide()) {
 			Entity entity = entityHitResult.getEntity();
 			if (!(entity instanceof DrakeEntity))
-				entity.damage(DamageSource.magic(this, entity), WoTRConfig.drake_ranged);
+				entity.hurt(DamageSource.indirectMagic(this, entity), WoTRConfig.drake_ranged);
 			this.remove(Entity.RemovalReason.DISCARDED);
-			entity.setOnFireFor(15);
+			entity.setSecondsOnFire(15);
 		}
 	}
 
 	@Override
 	@Environment(EnvType.CLIENT)
-	public boolean shouldRender(double distance) {
+	public boolean shouldRenderAtSqrDistance(double distance) {
 		return true;
 	}
 
 	@Override
-	public boolean doesRenderOnFire() {
+	public boolean displayFireAnimation() {
 		return false;
 	}
 }

@@ -1,13 +1,14 @@
 package mod.azure.wotr.client.render.entities.layer;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+
 import mod.azure.wotr.WoTRMod;
 import mod.azure.wotr.entity.DrakeEntity;
-import net.minecraft.client.render.OverlayTexture;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import software.bernie.geckolib3.renderers.geo.GeoLayerRenderer;
 import software.bernie.geckolib3.renderers.geo.IGeoRenderer;
 
@@ -18,24 +19,24 @@ public class DrakeArmorLayer extends GeoLayerRenderer<DrakeEntity> {
 	}
 
 	@Override
-	public void render(MatrixStack matrixStackIn, VertexConsumerProvider bufferIn, int packedLightIn,
+	public void render(PoseStack matrixStackIn, MultiBufferSource bufferIn, int packedLightIn,
 			DrakeEntity entitylivingbaseIn, float limbSwing, float limbSwingAmount, float partialTicks,
 			float ageInTicks, float netHeadYaw, float headPitch) {
-		RenderLayer cameo = RenderLayer.getArmorCutoutNoCull(new Identifier(WoTRMod.MODID,
+		RenderType cameo = RenderType.armorCutoutNoCull(new ResourceLocation(WoTRMod.MODID,
 				"textures/entity/layer/drake_armor_"
-						+ (entitylivingbaseIn.getAttributeInstance(EntityAttributes.GENERIC_ARMOR).getValue() == 5
+						+ (entitylivingbaseIn.getAttribute(Attributes.ARMOR).getValue() == 5
 								? "iron"
-								: entitylivingbaseIn.getAttributeInstance(EntityAttributes.GENERIC_ARMOR)
+								: entitylivingbaseIn.getAttribute(Attributes.ARMOR)
 										.getValue() == 7 ? "gold" : "diamond")
 						+ ".png"));
-		matrixStackIn.push();
+		matrixStackIn.pushPose();
 		matrixStackIn.scale(1.0f, 1.0f, 1.0f);
 		matrixStackIn.translate(0.0d, 0.0d, 0.0d);
-		if (entitylivingbaseIn.hasArmorInSlot())
+		if (entitylivingbaseIn.isWearingArmor())
 			this.getRenderer().render(
-					this.getEntityModel().getModel(new Identifier(WoTRMod.MODID, "geo/drake.geo.json")),
+					this.getEntityModel().getModel(new ResourceLocation(WoTRMod.MODID, "geo/drake.geo.json")),
 					entitylivingbaseIn, partialTicks, cameo, matrixStackIn, bufferIn, bufferIn.getBuffer(cameo),
-					packedLightIn, OverlayTexture.DEFAULT_UV, 1f, 1f, 1f, 1f);
-		matrixStackIn.pop();
+					packedLightIn, OverlayTexture.NO_OVERLAY, 1f, 1f, 1f, 1f);
+		matrixStackIn.popPose();
 	}
 }

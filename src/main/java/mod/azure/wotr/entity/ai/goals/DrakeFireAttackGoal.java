@@ -1,92 +1,97 @@
 package mod.azure.wotr.entity.ai.goals;
 
-import java.util.EnumSet;
-
 import mod.azure.wotr.entity.DrakeEntity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.sound.SoundEvents;
+import mod.azure.wotr.entity.projectiles.mobs.DrakeFireProjectile;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.phys.Vec3;
 
 public class DrakeFireAttackGoal extends Goal {
-	private final DrakeEntity entity;
-	private int attackTime = -1;
-	private AbstractRangedAttack attack;
+	private final DrakeEntity ghast;
+	public int chargeTime;
 
-	public DrakeFireAttackGoal(DrakeEntity mob, AbstractRangedAttack attack) {
-		this.entity = mob;
-		this.setControls(EnumSet.of(Goal.Control.MOVE, Goal.Control.LOOK));
-		this.attack = attack;
+	public DrakeFireAttackGoal(DrakeEntity ghast) {
+		this.ghast = ghast;
 	}
 
 	@Override
-	public boolean canStart() {
-		return this.entity.getTarget() != null;
-	}
-
-	@Override
-	public boolean shouldContinue() {
-		return this.canStart();
+	public boolean canUse() {
+		return this.ghast.getTarget() != null;
 	}
 
 	@Override
 	public void start() {
-		super.start();
-		this.attackTime = 0;
-		this.entity.setAttacking(true);
-		this.entity.getNavigation().stop();
+		this.chargeTime = 0;
 	}
 
 	@Override
 	public void stop() {
-		super.stop();
-		this.entity.setAttacking(false);
-		this.entity.setAttackingState(0);
-		this.attackTime = -1;
+		this.ghast.setAttackingState(0);
+	}
+
+	@Override
+	public boolean requiresUpdateEveryTick() {
+		return true;
 	}
 
 	@Override
 	public void tick() {
-		LivingEntity livingentity = this.entity.getTarget();
-		if (livingentity != null) {
-			boolean inLineOfSight = this.entity.getVisibilityCache().canSee(livingentity);
-			this.attackTime++;
-			this.entity.lookAtEntity(livingentity, 30.0F, 30.0F);
-			if (inLineOfSight) {
-				if (this.entity.distanceTo(livingentity) >= 3.0D) {
-					this.entity.getNavigation().stop();
-					this.entity.getLookControl().lookAt(livingentity.getX(), livingentity.getEyeY(),
-							livingentity.getZ());
-					if (this.attackTime == 1) {
-						this.entity.setAttackingState(0);
+		LivingEntity livingEntity = this.ghast.getTarget();
+		if (livingEntity == null) {
+			return;
+		}
+		boolean inLineOfSight = this.ghast.getSensing().hasLineOfSight(livingEntity);
+		this.chargeTime++;
+		this.ghast.lookAt(livingEntity, 30.0F, 30.0F);
+		if (inLineOfSight) {
+			if (this.ghast.distanceTo(livingEntity) >= 3.0D && this.ghast.getAttckingState() != 2) {
+				this.ghast.getNavigation().stop();
+				this.ghast.getLookControl().setLookAt(livingEntity.getX(), livingEntity.getEyeY(), livingEntity.getZ());
+				if (this.chargeTime == 1) {
+					this.ghast.setAttackingState(0);
+				}
+				if (this.chargeTime == 6) {
+					this.ghast.setAttackingState(1);
+				}
+				if (this.chargeTime == 12) {
+					Vec3 vec3 = this.ghast.getViewVector(1.0f);
+					double f = livingEntity.getX() - (this.ghast.getX() + vec3.x * 4.0);
+					double g = livingEntity.getY(0.5) - (0.5 + this.ghast.getY(0.5));
+					double h = livingEntity.getZ() - (this.ghast.getZ() + vec3.z * 4.0);
+					if (!this.ghast.isSilent()) {
+						this.ghast.level.playSound(null, ghast, SoundEvents.FIRECHARGE_USE, SoundSource.NEUTRAL, 1.0F,
+								1.0F);
 					}
-					if (this.attackTime == 6) {
-						this.entity.setAttackingState(1);
-					}
-					if (this.attackTime >= 12) {
-						entity.playSound(SoundEvents.BLOCK_FIRE_AMBIENT, 1.0F, 1.0F);
-						this.attack.shoot();
-					}
-					if (this.attackTime == 20) {
-						this.attackTime = 0;
-						this.entity.setAttackingState(0);
-						this.entity.getNavigation().startMovingTo(livingentity, 1.0);
-					}
-				} else {
-					this.entity.getLookControl().lookAt(livingentity.getX(), livingentity.getEyeY(),
-							livingentity.getZ());
-					if (this.attackTime == 1) {
-						this.entity.setAttackingState(2);
-					}
-					if (this.attackTime == 3) {
-						this.entity.tryAttack(livingentity);
-					}
-					if (this.attackTime == 20) {
-						this.attackTime = 0;
-						this.entity.setAttackingState(0);
-						this.entity.getNavigation().startMovingTo(livingentity, 1.0);
-					}
+					DrakeFireProjectile largeFireball = new DrakeFireProjectile(this.ghast.level,
+							(LivingEntity) this.ghast, f, g, h);
+					largeFireball.setPos(this.ghast.getX() + vec3.x * 4.0, this.ghast.getY(0.5) + 0.5,
+							largeFireball.getZ() + vec3.z * 4.0);
+					this.ghast.level.addFreshEntity(largeFireball);
+				}
+				if (this.chargeTime > 20) {
+					this.chargeTime = 0;
+					this.ghast.setAttackingState(0);
+					this.ghast.getNavigation().moveTo(livingEntity, 1.0);
+				}
+			} else if (this.ghast.getAttckingState() != 1) {
+				this.ghast.getLookControl().setLookAt(livingEntity.getX(), livingEntity.getEyeY(), livingEntity.getZ());
+				if (this.chargeTime == 1) {
+					this.ghast.setAttackingState(2);
+				}
+				if (this.chargeTime == 3) {
+					this.ghast.doHurtTarget(livingEntity);
+				}
+				if (this.chargeTime > 20) {
+					this.chargeTime = 0;
+					this.ghast.setAttackingState(0);
+					this.ghast.getNavigation().moveTo(livingEntity, 1.0);
 				}
 			}
+		} else if (this.chargeTime > 0) {
+			--this.chargeTime;
 		}
+		this.ghast.setCharging(this.chargeTime > 10);
 	}
 }

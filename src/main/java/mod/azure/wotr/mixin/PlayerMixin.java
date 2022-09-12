@@ -3,10 +3,10 @@ package mod.azure.wotr.mixin;
 import org.spongepowered.asm.mixin.Mixin;
 
 import mod.azure.wotr.entity.DrakeEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.Inventory;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
 
-@Mixin(PlayerEntity.class)
+@Mixin(Player.class)
 public abstract class PlayerMixin {
 
 	public static void openDrakeInventory(DrakeEntity horse, Inventory inventory) {

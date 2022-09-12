@@ -1,7 +1,7 @@
 package mod.azure.wotr.items;
 
-import net.minecraft.block.Block;
-import net.minecraft.item.BlockItem;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.level.block.Block;
 import software.bernie.geckolib3.core.IAnimatable;
 import software.bernie.geckolib3.core.PlayState;
 import software.bernie.geckolib3.core.controller.AnimationController;
@@ -14,7 +14,7 @@ public class GeckoBlockItem extends BlockItem implements IAnimatable {
 	public AnimationFactory factory = new AnimationFactory(this);
 	public String controllerName = "controller";
 
-	public GeckoBlockItem(Block block, Settings settings) {
+	public GeckoBlockItem(Block block, Properties settings) {
 		super(block, settings);
 	}
 

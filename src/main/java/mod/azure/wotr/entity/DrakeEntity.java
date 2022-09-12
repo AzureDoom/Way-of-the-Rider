@@ -4,49 +4,50 @@ import java.util.SplittableRandom;
 import java.util.UUID;
 import java.util.function.Predicate;
 
+import org.jetbrains.annotations.Nullable;
+
 import mod.azure.wotr.config.WoTRConfig;
-import mod.azure.wotr.entity.ai.goals.AbstractRangedAttack;
-import mod.azure.wotr.entity.ai.goals.AttackSound;
 import mod.azure.wotr.entity.ai.goals.DrakeFireAttackGoal;
-import mod.azure.wotr.entity.projectiles.mobs.DrakeFireProjectile;
 import mod.azure.wotr.items.DrakeArmorItem;
 import mod.azure.wotr.registry.WoTRSounds;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.entity.EntityData;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.SpawnReason;
-import net.minecraft.entity.ai.goal.ActiveTargetGoal;
-import net.minecraft.entity.ai.goal.SwimGoal;
-import net.minecraft.entity.attribute.DefaultAttributeContainer;
-import net.minecraft.entity.attribute.EntityAttributeModifier;
-import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.mob.HostileEntity;
-import net.minecraft.entity.passive.AbstractHorseEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.projectile.ProjectileEntity;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.inventory.SimpleInventory;
-import net.minecraft.inventory.StackReference;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.sound.BlockSoundGroup;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.LocalDifficulty;
-import net.minecraft.world.ServerWorldAccess;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.Mth;
+import net.minecraft.world.Container;
+import net.minecraft.world.DifficultyInstance;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.SlotAccess;
+import net.minecraft.world.entity.SpawnGroupData;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.animal.horse.AbstractHorse;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import software.bernie.geckolib3.core.IAnimatable;
 import software.bernie.geckolib3.core.PlayState;
 import software.bernie.geckolib3.core.builder.AnimationBuilder;
@@ -54,58 +55,60 @@ import software.bernie.geckolib3.core.controller.AnimationController;
 import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
 import software.bernie.geckolib3.core.manager.AnimationData;
 
-public class DrakeEntity extends WoTREntity {
+public class DrakeEntity extends WoTREntity implements Growable {
 
+	public static final EntityDataAccessor<Float> GROWTH = SynchedEntityData.defineId(DrakeEntity.class,
+			EntityDataSerializers.FLOAT);
 	private static final UUID HORSE_ARMOR_BONUS_ID = UUID.fromString("556E1665-8B10-40C8-8F9D-CF9B1667F295");
 
-	public DrakeEntity(EntityType<? extends AbstractHorseEntity> entityType, World world) {
+	public DrakeEntity(EntityType<? extends AbstractHorse> entityType, Level world) {
 		super(entityType, world);
-		this.experiencePoints = WoTRConfig.drake_exp;
+		this.xpReward = WoTRConfig.drake_exp;
 	}
 
-	public static DefaultAttributeContainer.Builder createMobAttributes() {
-		return LivingEntity.createLivingAttributes().add(EntityAttributes.GENERIC_FOLLOW_RANGE, 25.0D)
-				.add(EntityAttributes.GENERIC_MAX_HEALTH, WoTRConfig.drake_health)
-				.add(EntityAttributes.GENERIC_ATTACK_DAMAGE, WoTRConfig.drake_melee)
-				.add(EntityAttributes.HORSE_JUMP_STRENGTH, 3).add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.25D)
-				.add(EntityAttributes.GENERIC_ATTACK_KNOCKBACK, 0.0D);
+	public static AttributeSupplier.Builder createMobAttributes() {
+		return LivingEntity.createLivingAttributes().add(Attributes.FOLLOW_RANGE, 25.0D)
+				.add(Attributes.MAX_HEALTH, WoTRConfig.drake_health)
+				.add(Attributes.ATTACK_DAMAGE, WoTRConfig.drake_melee).add(Attributes.JUMP_STRENGTH, 3)
+				.add(Attributes.MOVEMENT_SPEED, 0.25D).add(Attributes.ATTACK_KNOCKBACK, 0.0D);
 	}
 
 	@Override
 	public <E extends IAnimatable> PlayState predicate(AnimationEvent<E> event) {
-		if ((lastLimbDistance < 0.65F && !(lastLimbDistance > -0.10F && lastLimbDistance < 0.02F)) && this.onGround
-				&& !this.touchingWater && !this.velocityModified) {
+		if ((animationSpeedOld < 0.65F && !(animationSpeedOld > -0.10F && animationSpeedOld < 0.02F)) && this.onGround
+				&& !this.wasTouchingWater && !this.hurtMarked) {
 			event.getController().setAnimation(new AnimationBuilder().addAnimation("walk", true));
 			return PlayState.CONTINUE;
 		}
-		if (lastLimbDistance >= 0.65F && this.onGround && !this.submergedInWater && !this.velocityModified) {
+		if (animationSpeedOld >= 0.65F && this.onGround && !this.wasEyeInWater && !this.hurtMarked) {
 			event.getController().setAnimation(new AnimationBuilder().addAnimation("run", true));
-			event.getController().setAnimationSpeed(1 + this.forwardSpeed);
+			event.getController().setAnimationSpeed(1 + this.zza);
 			return PlayState.CONTINUE;
 		}
-		if (!this.onGround && this.submergedInWater && !(lastLimbDistance > -0.10F && lastLimbDistance < 0.01F)
-				&& !(this.dead || this.getHealth() < 0.01 || this.isDead())) {
+		if (!this.onGround && this.wasEyeInWater && !(animationSpeedOld > -0.10F && animationSpeedOld < 0.01F)
+				&& !(this.dead || this.getHealth() < 0.01 || this.isDeadOrDying())) {
 			event.getController().setAnimation(new AnimationBuilder().addAnimation("swim_move", true));
 			return PlayState.CONTINUE;
 		}
-		if (!this.onGround && this.touchingWater && (lastLimbDistance > -0.10F && lastLimbDistance < 0.01F)
-				&& !(this.dead || this.getHealth() < 0.01 || this.isDead())) {
+		if (!this.onGround && this.wasTouchingWater && (animationSpeedOld > -0.10F && animationSpeedOld < 0.01F)
+				&& !(this.dead || this.getHealth() < 0.01 || this.isDeadOrDying())) {
 			event.getController().setAnimation(new AnimationBuilder().addAnimation("swim_idle", true));
 			return PlayState.CONTINUE;
 		}
-		if (!this.onGround && !this.touchingWater && !(this.dead || this.getHealth() < 0.01 || this.isDead())) {
+		if (!this.onGround && !this.wasTouchingWater
+				&& !(this.dead || this.getHealth() < 0.01 || this.isDeadOrDying())) {
 			event.getController().setAnimation(new AnimationBuilder().addAnimation("jump", true));
 			return PlayState.CONTINUE;
 		}
-		if ((this.dataTracker.get(STATE) == 2) && !(this.dead || this.getHealth() < 0.01 || this.isDead())) {
+		if ((this.entityData.get(STATE) == 2) && !(this.dead || this.getHealth() < 0.01 || this.isDeadOrDying())) {
 			event.getController().setAnimation(new AnimationBuilder().addAnimation("melee", true));
 			return PlayState.CONTINUE;
 		}
-		if ((this.dataTracker.get(STATE) == 1) && !(this.dead || this.getHealth() < 0.01 || this.isDead())) {
+		if ((this.entityData.get(STATE) == 1) && !(this.dead || this.getHealth() < 0.01 || this.isDeadOrDying())) {
 			event.getController().setAnimation(new AnimationBuilder().addAnimation("fireball", true));
 			return PlayState.CONTINUE;
 		}
-		if ((this.dead || this.getHealth() < 0.01 || this.isDead())) {
+		if ((this.dead || this.getHealth() < 0.01 || this.isDeadOrDying())) {
 			event.getController().setAnimation(new AnimationBuilder().addAnimation("death", false));
 			return PlayState.CONTINUE;
 		}
@@ -119,44 +122,11 @@ public class DrakeEntity extends WoTREntity {
 	}
 
 	@Override
-	protected void initGoals() {
-		super.initGoals();
-		this.goalSelector.add(0, new SwimGoal(this));
-		this.goalSelector.add(4, new DrakeFireAttackGoal(this,
-				new FireballAttack(this).setProjectileOriginOffset(0.8, 0.8, 0.8).setDamage(WoTRConfig.drake_ranged)));
-		this.targetSelector.add(2, new ActiveTargetGoal<>(this, HostileEntity.class, true));
-	}
-
-	public class FireballAttack extends AbstractRangedAttack {
-
-		public FireballAttack(DrakeEntity parentEntity, double xOffSetModifier, double entityHeightFraction,
-				double zOffSetModifier, float damage) {
-			super(parentEntity, xOffSetModifier, entityHeightFraction, zOffSetModifier, damage);
-		}
-
-		public FireballAttack(DrakeEntity parentEntity) {
-			super(parentEntity);
-		}
-
-		@Override
-		public AttackSound getDefaultAttackSound() {
-			return new AttackSound(SoundEvents.BLOCK_CAMPFIRE_CRACKLE, 1, 1);
-		}
-
-		@Override
-		public ProjectileEntity getProjectile(World world, double d2, double d3, double d4) {
-			return new DrakeFireProjectile(world, this.parentEntity, d2, d3, d4);
-
-		}
-	}
-
-	@Override
-	protected void initCustomGoals() {
-	}
-
-	@Override
-	public int getArmor() {
-		return WoTRConfig.drake_armor;
+	protected void registerGoals() {
+		super.registerGoals();
+		this.goalSelector.addGoal(0, new FloatGoal(this));
+		this.goalSelector.addGoal(7, new DrakeFireAttackGoal(this));
+		this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Monster.class, true));
 	}
 
 	@Override
@@ -165,179 +135,210 @@ public class DrakeEntity extends WoTREntity {
 	}
 
 	public int getVariant() {
-		return MathHelper.clamp((Integer) this.dataTracker.get(VARIANT), 1, 3);
+		return Mth.clamp((Integer) this.entityData.get(VARIANT), 1, 3);
 	}
 
 	public int getVariants() {
 		return 3;
 	}
 
+	public float getGrowth() {
+		return entityData.get(GROWTH);
+	}
+
+	public void setGrowth(float growth) {
+		entityData.set(GROWTH, growth);
+	}
+
 	@Override
-	public void writeCustomDataToNbt(NbtCompound nbt) {
-		super.writeCustomDataToNbt(nbt);
+	protected void defineSynchedData() {
+		super.defineSynchedData();
+		this.entityData.define(GROWTH, 0.0F);
+	}
+
+	@Override
+	public void addAdditionalSaveData(CompoundTag nbt) {
+		super.addAdditionalSaveData(nbt);
 		nbt.putInt("Variant", this.getVariant());
-		if (!this.items.getStack(1).isEmpty()) {
-			nbt.put("ArmorItem", this.items.getStack(1).writeNbt(new NbtCompound()));
+		nbt.putFloat("growth", getGrowth());
+		if (!this.inventory.getItem(1).isEmpty()) {
+			nbt.put("ArmorItem", this.inventory.getItem(1).save(new CompoundTag()));
 		}
 	}
 
 	@Override
-	public void readCustomDataFromNbt(NbtCompound nbt) {
+	public void readAdditionalSaveData(CompoundTag nbt) {
 		ItemStack itemStack;
-		super.readCustomDataFromNbt(nbt);
+		super.readAdditionalSaveData(nbt);
 		this.setVariant(nbt.getInt("Variant"));
-		if (nbt.contains("ArmorItem", NbtElement.COMPOUND_TYPE)
-				&& !(itemStack = ItemStack.fromNbt(nbt.getCompound("ArmorItem"))).isEmpty()
-				&& this.isHorseArmor(itemStack)) {
-			this.items.setStack(1, itemStack);
+		this.setGrowth(nbt.getFloat("growth"));
+		if (nbt.contains("ArmorItem", Tag.TAG_COMPOUND)
+				&& !(itemStack = ItemStack.of(nbt.getCompound("ArmorItem"))).isEmpty() && this.isArmor(itemStack)) {
+			this.inventory.setItem(1, itemStack);
 		}
-		this.updateSaddle();
+		this.updateContainerEquipment();
 	}
 
 	@Override
-	public EntityData initialize(ServerWorldAccess serverWorldAccess, LocalDifficulty difficulty,
-			SpawnReason spawnReason, EntityData entityData, NbtCompound entityTag) {
-		entityData = super.initialize(serverWorldAccess, difficulty, spawnReason, entityData, entityTag);
+	public void aiStep() {
+		super.aiStep();
+
+		if (!level.isClientSide() && this.isAlive()) {
+			grow(this, (this.tickCount / 24000) * 1);
+		}
+	}
+
+	@Override
+	public float getMaxGrowth() {
+		return 1200;
+	}
+
+	@Override
+	public SpawnGroupData finalizeSpawn(ServerLevelAccessor serverWorldAccess, DifficultyInstance difficulty,
+			MobSpawnType reason, @Nullable SpawnGroupData spawnData, @Nullable CompoundTag entityTag) {
+		spawnData = super.finalizeSpawn(serverWorldAccess, difficulty, reason, spawnData, entityTag);
 		SplittableRandom random = new SplittableRandom();
 		int var = random.nextInt(0, 4);
 		this.setVariant(var);
-		if ((spawnReason == SpawnReason.CHUNK_GENERATION || spawnReason == SpawnReason.NATURAL)) {
-			this.setTame(false);
+		if ((reason == MobSpawnType.CHUNK_GENERATION || reason == MobSpawnType.NATURAL)) {
+			this.setTamed(false);
 		} else {
-			LivingEntity player = this.getEntityWorld().getClosestPlayer(this, 15);
+			LivingEntity player = this.getCommandSenderWorld().getNearestPlayer(this, 15);
 			if (player != null)
-				this.bondWithPlayer((PlayerEntity) player);
+				this.tameWithName((Player) player);
+			setGrowth(1200);
 		}
-		return entityData;
+		return spawnData;
 	}
 
 	@Override
-	public boolean bondWithPlayer(PlayerEntity player) {
-		this.setOwnerUuid(player.getUuid());
-		this.setTame(true);
+	public boolean tameWithName(Player player) {
+		this.setOwnerUUID(player.getUUID());
+		this.setTamed(true);
 		return true;
 	}
 
 	public ItemStack getArmorType() {
-		return this.getEquippedStack(EquipmentSlot.CHEST);
+		return this.getItemBySlot(EquipmentSlot.CHEST);
 	}
 
 	private void equipArmor(ItemStack stack) {
-		this.equipStack(EquipmentSlot.CHEST, stack);
-		this.setEquipmentDropChance(EquipmentSlot.CHEST, 0.0f);
+		this.setItemSlot(EquipmentSlot.CHEST, stack);
+		this.setDropChance(EquipmentSlot.CHEST, 0.0f);
 	}
 
 	@Override
-	protected void updateSaddle() {
-		if (this.world.isClient) {
+	protected void updateContainerEquipment() {
+		if (this.level.isClientSide()) {
 			return;
 		}
-		super.updateSaddle();
-		this.setArmorTypeFromStack(this.items.getStack(1));
-		this.setEquipmentDropChance(EquipmentSlot.CHEST, 0.0f);
+		super.updateContainerEquipment();
+		this.setArmorTypeFromStack(this.inventory.getItem(1));
+		this.setDropChance(EquipmentSlot.CHEST, 0.0f);
 	}
 
 	private void setArmorTypeFromStack(ItemStack stack) {
 		this.equipArmor(stack);
-		if (!this.world.isClient) {
+		if (!this.level.isClientSide()) {
 			int i;
-			this.getAttributeInstance(EntityAttributes.GENERIC_ARMOR).removeModifier(HORSE_ARMOR_BONUS_ID);
-			if (this.isHorseArmor(stack) && (i = ((DrakeArmorItem) stack.getItem()).getBonus()) != 0) {
-				this.getAttributeInstance(EntityAttributes.GENERIC_ARMOR)
-						.addTemporaryModifier(new EntityAttributeModifier(HORSE_ARMOR_BONUS_ID, "Horse armor bonus",
-								(double) i, EntityAttributeModifier.Operation.ADDITION));
+			this.getAttribute(Attributes.ARMOR).removeModifier(HORSE_ARMOR_BONUS_ID);
+			if (this.isArmor(stack) && (i = ((DrakeArmorItem) stack.getItem()).getBonus()) != 0) {
+				this.getAttribute(Attributes.ARMOR).addTransientModifier(new AttributeModifier(HORSE_ARMOR_BONUS_ID,
+						"Horse armor bonus", (double) i, AttributeModifier.Operation.ADDITION));
 			}
 		}
 	}
 
 	@Override
-	public void onInventoryChanged(Inventory sender) {
+	public void containerChanged(Container sender) {
 		ItemStack itemStack = this.getArmorType();
-		super.onInventoryChanged(sender);
+		super.containerChanged(sender);
 		ItemStack itemStack2 = this.getArmorType();
-		if (this.age > 20 && this.isHorseArmor(itemStack2) && itemStack != itemStack2) {
-			this.playSound(SoundEvents.ENTITY_HORSE_ARMOR, 0.5f, 1.0f);
+		if (this.age > 20 && this.isArmor(itemStack2) && itemStack != itemStack2) {
+			this.playSound(SoundEvents.HORSE_ARMOR, 0.5f, 1.0f);
 		}
 	}
 
 	@Override
-	public boolean hasArmorSlot() {
+	public boolean canWearArmor() {
 		return true;
 	}
 
 	@Override
-	public boolean isHorseArmor(ItemStack item) {
+	public boolean isArmor(ItemStack item) {
 		return item.getItem() instanceof DrakeArmorItem;
 	}
 
 	@Override
-	public ActionResult interactMob(PlayerEntity player, Hand hand) {
-		ItemStack itemStack = player.getStackInHand(hand);
+	public InteractionResult mobInteract(Player player, InteractionHand hand) {
+		ItemStack itemStack = player.getItemInHand(hand);
 		Item item = itemStack.getItem();
 		if (!this.isBaby()) {
-			if (player.shouldCancelInteraction()) {
-				this.openInventory(player);
-				return ActionResult.success(this.world.isClient);
+			if (player.isSecondaryUseActive()) {
+				this.openCustomInventoryScreen(player);
+				return InteractionResult.sidedSuccess(this.level.isClientSide);
 			}
-			if (this.hasPassengers()) {
-				return super.interactMob(player, hand);
+			if (this.isVehicle()) {
+				return super.mobInteract(player, hand);
 			}
 		}
 		if (!itemStack.isEmpty()) {
-			ActionResult actionResult = itemStack.useOnEntity(player, this, hand);
-			if (actionResult.isAccepted()) {
+			InteractionResult actionResult = itemStack.interactLivingEntity(player, this, hand);
+			if (actionResult.consumesAction()) {
 				return actionResult;
 			}
-			boolean bl = !this.isBaby() && !this.isSaddled() && itemStack.isOf(Items.SADDLE);
-			if (this.isHorseArmor(itemStack) || bl) {
-				this.openInventory(player);
-				return ActionResult.success(this.world.isClient);
+			boolean bl = !this.isBaby() && !this.isSaddled() && itemStack.is(Items.SADDLE) && this.getGrowth() >= this.getMaxGrowth();
+			if (this.isArmor(itemStack) || bl) {
+				this.openCustomInventoryScreen(player);
+				return InteractionResult.sidedSuccess(this.level.isClientSide);
 			}
-			if (this.isBreedingItem(itemStack) && this.getHealth() < this.getMaxHealth())
-				this.heal(item.getFoodComponent().getHunger());
+			if (this.isFood(itemStack) && this.getHealth() < this.getMaxHealth())
+				this.heal(item.getFoodProperties().getNutrition());
+		}
+		if (this.getGrowth() < this.getMaxGrowth()) {
+			return super.mobInteract(player, hand);
 		}
 		if (this.isBaby()) {
-			return super.interactMob(player, hand);
+			return super.mobInteract(player, hand);
 		}
 		if (this.isSaddled())
-			this.putPlayerOnBack(player);
-		return ActionResult.success(this.world.isClient);
+			this.doPlayerRide(player);
+		return InteractionResult.sidedSuccess(this.level.isClientSide);
 	}
 
 	@Override
-	public boolean isBreedingItem(ItemStack stack) {
+	public boolean isFood(ItemStack stack) {
 		Item item = stack.getItem();
-		return item.isFood() && item.getFoodComponent().isMeat();
+		return item.isEdible() && item.getFoodProperties().isMeat();
 	}
 
 	@Override
-	public StackReference getStackReference(int mappedIndex) {
+	public SlotAccess getSlot(int mappedIndex) {
 		int j;
 		int i = mappedIndex - 400;
-		if (i >= 0 && i < 2 && i < this.items.size()) {
+		if (i >= 0 && i < 2 && i < this.inventory.getContainerSize()) {
 			if (i == 0) {
-				return this.createInventoryStackReference(i, stack -> stack.isEmpty() || stack.isOf(Items.SADDLE));
+				return this.createEquipmentSlotAccess(i, stack -> (stack.isEmpty() || stack.is(Items.SADDLE) && this.getGrowth() >= this.getMaxGrowth()));
 			}
 			if (i == 1) {
-				if (!this.hasArmorSlot()) {
-					return StackReference.EMPTY;
+				if (!this.canWearArmor()) {
+					return SlotAccess.NULL;
 				}
-				return this.createInventoryStackReference(i,
-						stack -> stack.isEmpty() || this.isHorseArmor((ItemStack) stack));
+				return this.createEquipmentSlotAccess(i, stack -> stack.isEmpty() || this.isArmor((ItemStack) stack));
 			}
 		}
-		if ((j = mappedIndex - 500 + 2) >= 2 && j < this.items.size()) {
-			return StackReference.of(this.items, j);
+		if ((j = mappedIndex - 500 + 2) >= 2 && j < this.inventory.getContainerSize()) {
+			return SlotAccess.forContainer(this.inventory, j);
 		}
-		return super.getStackReference(mappedIndex);
+		return super.getSlot(mappedIndex);
 	}
 
-	private StackReference createInventoryStackReference(final int slot, final Predicate<ItemStack> predicate) {
-		return new StackReference() {
+	private SlotAccess createEquipmentSlotAccess(final int slot, final Predicate<ItemStack> predicate) {
+		return new SlotAccess() {
 
 			@Override
 			public ItemStack get() {
-				return DrakeEntity.this.items.getStack(slot);
+				return DrakeEntity.this.inventory.getItem(slot);
 			}
 
 			@Override
@@ -345,69 +346,69 @@ public class DrakeEntity extends WoTREntity {
 				if (!predicate.test(stack)) {
 					return false;
 				}
-				DrakeEntity.this.items.setStack(slot, stack);
-				DrakeEntity.this.updateSaddle();
+				DrakeEntity.this.inventory.setItem(slot, stack);
+				DrakeEntity.this.updateContainerEquipment();
 				return true;
 			}
 		};
 	}
 
 	@Override
-	public void travel(Vec3d movementInput) {
+	public void travel(Vec3 movementInput) {
 		if (!this.isAlive()) {
 			return;
 		}
-		LivingEntity livingEntity = this.getPrimaryPassenger();
-		if (!this.hasPassengers() || livingEntity == null) {
-			this.airStrafingSpeed = 0.02f;
+		LivingEntity livingEntity = this.getControllingPassenger();
+		if (!this.isVehicle() || livingEntity == null) {
+			this.flyingSpeed = 0.02f;
 			super.travel(movementInput);
 			return;
 		}
-		this.setYaw(livingEntity.getYaw());
-		this.prevYaw = this.getYaw();
-		this.setPitch(livingEntity.getPitch() * 0.5f);
-		this.setRotation(this.getYaw(), this.getPitch());
-		this.headYaw = this.bodyYaw = this.getYaw();
-		float f = livingEntity.sidewaysSpeed * 0.5f;
-		float g = livingEntity.forwardSpeed;
+		this.setYRot(livingEntity.getYRot());
+		this.yRotO = this.getYRot();
+		this.setXRot(livingEntity.getXRot() * 0.5f);
+		this.setRot(this.getYRot(), this.getXRot());
+		this.yHeadRot = this.yBodyRot = this.getYRot();
+		float f = livingEntity.xxa * 0.5f;
+		float g = livingEntity.zza;
 		if (g <= 0.0f) {
 			g *= 0.25f;
-			this.soundTicks = 0;
+			this.gallopSoundCounter = 0;
 		}
-		if (this.jumpStrength > 0.0f && !this.isInAir() && this.onGround) {
-			double d = this.getJumpStrength() * (double) this.jumpStrength * (double) this.getJumpVelocityMultiplier();
-			double e = d + this.getJumpBoostVelocityModifier();
-			Vec3d vec3d = this.getVelocity();
-			this.setVelocity(vec3d.x, e * this.jumpStrength, vec3d.z);
-			this.setInAir(true);
-			this.velocityDirty = true;
+		if (this.playerJumpPendingScale > 0.0f && !this.isJumping() && this.onGround) {
+			double d = this.getCustomJump() * (double) this.playerJumpPendingScale * (double) this.getBlockJumpFactor();
+			double e = d + this.getJumpBoostPower();
+			Vec3 vec3d = this.getDeltaMovement();
+			this.setDeltaMovement(vec3d.x, e * this.playerJumpPendingScale, vec3d.z);
+			this.setIsJumping(true);
+			this.hasImpulse = true;
 			if (g > 0.0f) {
-				float h = MathHelper.sin(this.getYaw() * ((float) Math.PI / 180));
-				float i = MathHelper.cos(this.getYaw() * ((float) Math.PI / 180));
-				this.setVelocity(this.getVelocity().add(-3.8f * h * this.jumpStrength, 1.0 * this.jumpStrength,
-						3.8f * i * this.jumpStrength));
+				float h = Mth.sin(this.getYRot() * ((float) Math.PI / 180));
+				float i = Mth.cos(this.getYRot() * ((float) Math.PI / 180));
+				this.setDeltaMovement(this.getDeltaMovement().add(-3.8f * h * this.playerJumpPendingScale,
+						1.0 * this.playerJumpPendingScale, 3.8f * i * this.playerJumpPendingScale));
 			}
-			this.jumpStrength = 0.0f;
+			this.playerJumpPendingScale = 0.0f;
 		}
-		this.airStrafingSpeed = this.getMovementSpeed() * 0.1f;
-		if (this.isLogicalSideForUpdatingMovement()) {
-			this.setMovementSpeed((float) this.getAttributeValue(EntityAttributes.GENERIC_MOVEMENT_SPEED));
-			super.travel(new Vec3d(f, movementInput.y, g));
-		} else if (livingEntity instanceof PlayerEntity) {
-			this.setVelocity(Vec3d.ZERO);
+		this.flyingSpeed = this.getSpeed() * 0.1f;
+		if (this.isControlledByLocalInstance()) {
+			this.setSpeed((float) this.getAttributeValue(Attributes.MOVEMENT_SPEED));
+			super.travel(new Vec3(f, movementInput.y, g));
+		} else if (livingEntity instanceof Player) {
+			this.setDeltaMovement(Vec3.ZERO);
 		}
 		if (this.onGround) {
-			this.jumpStrength = 0.0f;
-			this.setInAir(false);
+			this.playerJumpPendingScale = 0.0f;
+			this.setIsJumping(false);
 		}
-		this.updateLimbs(this, false);
-		this.tryCheckBlockCollision();
+		this.calculateEntityAnimation(this, false);
+		this.tryCheckInsideBlocks();
 	}
 
 	@Override
-	public void openInventory(PlayerEntity player) {
-		if (!this.world.isClient && (!this.hasPassengers() || this.hasPassenger(player))) {
-			player.openHorseInventory(this, this.items);
+	public void openCustomInventoryScreen(Player player) {
+		if (!this.level.isClientSide() && (!this.isVehicle() || this.hasPassenger(player))) {
+			player.openHorseInventory(this, this.inventory);
 		}
 	}
 
@@ -416,38 +417,38 @@ public class DrakeEntity extends WoTREntity {
 	}
 
 	protected void onChestedStatusChanged() {
-		SimpleInventory simpleInventory = this.items;
-		this.items = new SimpleInventory(this.getInventorySize());
+		SimpleContainer simpleInventory = this.inventory;
+		this.inventory = new SimpleContainer(this.getInventorySize());
 		if (simpleInventory != null) {
 			simpleInventory.removeListener(this);
-			int i = Math.min(simpleInventory.size(), this.items.size());
+			int i = Math.min(simpleInventory.getContainerSize(), this.inventory.getContainerSize());
 			for (int j = 0; j < i; ++j) {
-				ItemStack itemStack = simpleInventory.getStack(j);
+				ItemStack itemStack = simpleInventory.getItem(j);
 				if (itemStack.isEmpty())
 					continue;
-				this.items.setStack(j, itemStack.copy());
+				this.inventory.setItem(j, itemStack.copy());
 			}
 		}
-		this.items.addListener(this);
-		this.updateSaddle();
+		this.inventory.addListener(this);
+		this.updateContainerEquipment();
 	}
 
 	@Override
-	public boolean handleFallDamage(float fallDistance, float damageMultiplier, DamageSource damageSource) {
+	public boolean causeFallDamage(float fallDistance, float damageMultiplier, DamageSource damageSource) {
 		if (fallDistance > 1.0f) {
-			this.playSound(SoundEvents.ENTITY_HORSE_LAND, 0.4f, 1.0f);
+			this.playSound(SoundEvents.HORSE_LAND, 0.4f, 1.0f);
 		}
 		return false;
 	}
 
 	@Override
-	public boolean canBeSaddled() {
+	public boolean isSaddleable() {
 		return this.isAlive() && !this.isBaby();
 	}
 
 	@Override
 	protected boolean isImmobile() {
-		return super.isImmobile() && this.hasPassengers() && this.isSaddled();
+		return super.isImmobile() && this.isVehicle() && this.isSaddled();
 	}
 
 	@Override
@@ -456,8 +457,8 @@ public class DrakeEntity extends WoTREntity {
 	}
 
 	@Override
-	public void setOnFireFor(int seconds) {
-		super.setOnFireFor(0);
+	public void setSecondsOnFire(int seconds) {
+		super.setSecondsOnFire(0);
 	}
 
 	@Override
@@ -465,17 +466,17 @@ public class DrakeEntity extends WoTREntity {
 		if (state.getMaterial().isLiquid()) {
 			return;
 		}
-		BlockState blockState = this.world.getBlockState(pos.up());
-		BlockSoundGroup blockSoundGroup = state.getSoundGroup();
-		if (blockState.isOf(Blocks.SNOW)) {
-			blockSoundGroup = blockState.getSoundGroup();
+		BlockState blockState = this.level.getBlockState(pos.above());
+		SoundType blockSoundGroup = state.getSoundType();
+		if (blockState.is(Blocks.SNOW)) {
+			blockSoundGroup = blockState.getSoundType();
 		} else {
-			++this.soundTicks;
-			if (this.soundTicks > 5 && this.soundTicks % 3 == 0) {
-				this.playSound(SoundEvents.ENTITY_RAVAGER_STEP, blockSoundGroup.getVolume() * 0.15f,
+			++this.gallopSoundCounter;
+			if (this.gallopSoundCounter > 5 && this.gallopSoundCounter % 3 == 0) {
+				this.playSound(SoundEvents.RAVAGER_STEP, blockSoundGroup.getVolume() * 0.15f,
 						blockSoundGroup.getPitch());
-			} else if (this.soundTicks <= 5) {
-				this.playSound(SoundEvents.ENTITY_RAVAGER_STEP, blockSoundGroup.getVolume() * 0.15f,
+			} else if (this.gallopSoundCounter <= 5) {
+				this.playSound(SoundEvents.RAVAGER_STEP, blockSoundGroup.getVolume() * 0.15f,
 						blockSoundGroup.getPitch());
 			}
 		}
@@ -483,7 +484,7 @@ public class DrakeEntity extends WoTREntity {
 
 	@Override
 	protected void playJumpSound() {
-		this.playSound(SoundEvents.ENTITY_ENDER_DRAGON_FLAP, 0.4f, 1.0f);
+		this.playSound(SoundEvents.ENDER_DRAGON_FLAP, 0.4f, 1.0f);
 	}
 
 }
