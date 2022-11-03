@@ -27,6 +27,7 @@ import software.bernie.geckolib3.core.controller.AnimationController;
 import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
 import software.bernie.geckolib3.core.manager.AnimationData;
 import software.bernie.geckolib3.core.manager.AnimationFactory;
+import software.bernie.geckolib3.util.GeckoLibUtil;
 
 public abstract class WoTREntity extends AbstractHorse implements IAnimatable, IAnimationTickable {
 
@@ -36,7 +37,7 @@ public abstract class WoTREntity extends AbstractHorse implements IAnimatable, I
 			EntityDataSerializers.INT);
 	private static final EntityDataAccessor<Boolean> DATA_IS_CHARGING = SynchedEntityData.defineId(WoTREntity.class,
 			EntityDataSerializers.BOOLEAN);
-	public AnimationFactory factory = new AnimationFactory(this);
+	public AnimationFactory factory = GeckoLibUtil.createFactory(this);
 
 	public WoTREntity(EntityType<? extends AbstractHorse> entityType, Level Level) {
 		super(entityType, Level);

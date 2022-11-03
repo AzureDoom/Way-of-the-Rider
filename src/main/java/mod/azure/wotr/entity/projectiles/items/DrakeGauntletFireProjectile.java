@@ -39,6 +39,7 @@ import software.bernie.geckolib3.core.controller.AnimationController;
 import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
 import software.bernie.geckolib3.core.manager.AnimationData;
 import software.bernie.geckolib3.core.manager.AnimationFactory;
+import software.bernie.geckolib3.util.GeckoLibUtil;
 
 public class DrakeGauntletFireProjectile extends AbstractArrow implements IAnimatable {
 
@@ -46,7 +47,7 @@ public class DrakeGauntletFireProjectile extends AbstractArrow implements IAnima
 	protected boolean inAir;
 	private int ticksInAir;
 	private LivingEntity shooter;
-	private AnimationFactory factory = new AnimationFactory(this);
+	private AnimationFactory factory = GeckoLibUtil.createFactory(this);
 	private BlockPos lightBlockPos = null;
 	private int idleTicks = 0;
 

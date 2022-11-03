@@ -51,6 +51,7 @@ import net.minecraft.world.phys.Vec3;
 import software.bernie.geckolib3.core.IAnimatable;
 import software.bernie.geckolib3.core.PlayState;
 import software.bernie.geckolib3.core.builder.AnimationBuilder;
+import software.bernie.geckolib3.core.builder.ILoopType.EDefaultLoopTypes;
 import software.bernie.geckolib3.core.controller.AnimationController;
 import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
 import software.bernie.geckolib3.core.manager.AnimationData;
@@ -77,42 +78,42 @@ public class DrakeEntity extends WoTREntity implements Growable {
 	public <E extends IAnimatable> PlayState predicate(AnimationEvent<E> event) {
 		if ((animationSpeedOld < 0.65F && !(animationSpeedOld > -0.10F && animationSpeedOld < 0.02F)) && this.onGround
 				&& !this.wasTouchingWater && !this.hurtMarked) {
-			event.getController().setAnimation(new AnimationBuilder().addAnimation("walk", true));
+			event.getController().setAnimation(new AnimationBuilder().addAnimation("walk", EDefaultLoopTypes.LOOP));
 			return PlayState.CONTINUE;
 		}
 		if (animationSpeedOld >= 0.65F && this.onGround && !this.wasEyeInWater && !this.hurtMarked) {
-			event.getController().setAnimation(new AnimationBuilder().addAnimation("run", true));
+			event.getController().setAnimation(new AnimationBuilder().addAnimation("run", EDefaultLoopTypes.LOOP));
 			event.getController().setAnimationSpeed(1 + this.zza);
 			return PlayState.CONTINUE;
 		}
 		if (!this.onGround && this.wasEyeInWater && !(animationSpeedOld > -0.10F && animationSpeedOld < 0.01F)
 				&& !(this.dead || this.getHealth() < 0.01 || this.isDeadOrDying())) {
-			event.getController().setAnimation(new AnimationBuilder().addAnimation("swim_move", true));
+			event.getController().setAnimation(new AnimationBuilder().addAnimation("swim_move", EDefaultLoopTypes.LOOP));
 			return PlayState.CONTINUE;
 		}
 		if (!this.onGround && this.wasTouchingWater && (animationSpeedOld > -0.10F && animationSpeedOld < 0.01F)
 				&& !(this.dead || this.getHealth() < 0.01 || this.isDeadOrDying())) {
-			event.getController().setAnimation(new AnimationBuilder().addAnimation("swim_idle", true));
+			event.getController().setAnimation(new AnimationBuilder().addAnimation("swim_idle", EDefaultLoopTypes.LOOP));
 			return PlayState.CONTINUE;
 		}
 		if (!this.onGround && !this.wasTouchingWater
 				&& !(this.dead || this.getHealth() < 0.01 || this.isDeadOrDying())) {
-			event.getController().setAnimation(new AnimationBuilder().addAnimation("jump", true));
+			event.getController().setAnimation(new AnimationBuilder().addAnimation("jump", EDefaultLoopTypes.LOOP));
 			return PlayState.CONTINUE;
 		}
 		if ((this.entityData.get(STATE) == 2) && !(this.dead || this.getHealth() < 0.01 || this.isDeadOrDying())) {
-			event.getController().setAnimation(new AnimationBuilder().addAnimation("melee", true));
+			event.getController().setAnimation(new AnimationBuilder().addAnimation("melee", EDefaultLoopTypes.LOOP));
 			return PlayState.CONTINUE;
 		}
 		if ((this.entityData.get(STATE) == 1) && !(this.dead || this.getHealth() < 0.01 || this.isDeadOrDying())) {
-			event.getController().setAnimation(new AnimationBuilder().addAnimation("fireball", true));
+			event.getController().setAnimation(new AnimationBuilder().addAnimation("fireball", EDefaultLoopTypes.LOOP));
 			return PlayState.CONTINUE;
 		}
 		if ((this.dead || this.getHealth() < 0.01 || this.isDeadOrDying())) {
-			event.getController().setAnimation(new AnimationBuilder().addAnimation("death", false));
+			event.getController().setAnimation(new AnimationBuilder().addAnimation("death", EDefaultLoopTypes.PLAY_ONCE));
 			return PlayState.CONTINUE;
 		}
-		event.getController().setAnimation(new AnimationBuilder().addAnimation("idle", true));
+		event.getController().setAnimation(new AnimationBuilder().addAnimation("idle", EDefaultLoopTypes.LOOP));
 		return PlayState.CONTINUE;
 	}
 
