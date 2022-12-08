@@ -1,16 +1,19 @@
 package mod.azure.wotr.items;
 
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import io.netty.buffer.Unpooled;
 import mod.azure.wotr.WoTRMod;
 import mod.azure.wotr.blocks.tile.TickingLightEntity;
 import mod.azure.wotr.client.WoTRClientMod;
+import mod.azure.wotr.client.render.items.DrakeGauntletRender;
 import mod.azure.wotr.entity.projectiles.items.DrakeGauntletFireProjectile;
 import mod.azure.wotr.registry.WoTRBlocks;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -33,29 +36,29 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
-import software.bernie.geckolib3.core.AnimationState;
-import software.bernie.geckolib3.core.IAnimatable;
-import software.bernie.geckolib3.core.PlayState;
-import software.bernie.geckolib3.core.builder.AnimationBuilder;
-import software.bernie.geckolib3.core.builder.ILoopType.EDefaultLoopTypes;
-import software.bernie.geckolib3.core.controller.AnimationController;
-import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
-import software.bernie.geckolib3.core.manager.AnimationData;
-import software.bernie.geckolib3.core.manager.AnimationFactory;
-import software.bernie.geckolib3.network.GeckoLibNetwork;
-import software.bernie.geckolib3.network.ISyncable;
-import software.bernie.geckolib3.util.GeckoLibUtil;
+import software.bernie.geckolib.animatable.GeoItem;
+import software.bernie.geckolib.animatable.SingletonGeoAnimatable;
+import software.bernie.geckolib.animatable.client.RenderProvider;
+import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.core.animation.AnimatableManager.ControllerRegistrar;
+import software.bernie.geckolib.core.animation.Animation.LoopType;
+import software.bernie.geckolib.core.animation.AnimationController;
+import software.bernie.geckolib.core.animation.RawAnimation;
+import software.bernie.geckolib.core.object.PlayState;
+import software.bernie.geckolib.util.GeckoLibUtil;
 
-public class DrakeGauntletItem extends SwordItem implements IAnimatable, ISyncable {
+public class DrakeGauntletItem extends SwordItem implements GeoItem {
 
 	private BlockPos lightBlockPos = null;
-	public AnimationFactory factory = new AnimationFactory(this);
-	public String controllerName = "controller";
-	public static final int ANIM_OPEN = 0;
+	private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
+	private final Supplier<Object> renderProvider = GeoItem.makeRenderer(this);
 
 	public DrakeGauntletItem() {
-		super(Tiers.DIAMOND, 20, -3.0F, new Item.Properties().stacksTo(1).durability(11).tab(WoTRMod.WoTRItemGroup));
-		GeckoLibNetwork.registerSyncable(this);
+		super(Tiers.DIAMOND, 20, -3.0F, new Item.Properties().stacksTo(1).durability(11));
+
+		// Register our item as server-side handled.
+		// This enables both animation data syncing and server-side animation triggering
+		SingletonGeoAnimatable.registerSyncedAnimatable(this);
 	}
 
 	public void removeAmmo(Item ammo, Player playerEntity) {
@@ -144,29 +147,16 @@ public class DrakeGauntletItem extends SwordItem implements IAnimatable, ISyncab
 		return null;
 	}
 
-	public <P extends Item & IAnimatable> PlayState predicate(AnimationEvent<P> event) {
-		return PlayState.CONTINUE;
+	// Register our animation controllers
+	@Override
+	public void registerControllers(ControllerRegistrar controllers) {
+		controllers.add(new AnimationController<>(this, "shoot_controller", event -> PlayState.CONTINUE)
+				.triggerableAnim("firing", RawAnimation.begin().then("firing", LoopType.PLAY_ONCE)));
 	}
 
 	@Override
-	public void registerControllers(AnimationData data) {
-		data.addAnimationController(new AnimationController(this, controllerName, 1, this::predicate));
-	}
-
-	@Override
-	public AnimationFactory getFactory() {
-		return this.factory;
-	}
-
-	@Override
-	public void onAnimationSync(int id, int state) {
-		if (state == ANIM_OPEN) {
-			final AnimationController<?> controller = GeckoLibUtil.getControllerForID(this.factory, id, controllerName);
-			if (controller.getAnimationState() == AnimationState.Stopped) {
-				controller.markNeedsReload();
-				controller.setAnimation(new AnimationBuilder().addAnimation("firing", EDefaultLoopTypes.PLAY_ONCE));
-			}
-		}
+	public AnimatableInstanceCache getAnimatableInstanceCache() {
+		return this.cache;
 	}
 
 	@Override
@@ -218,17 +208,13 @@ public class DrakeGauntletItem extends SwordItem implements IAnimatable, ISyncab
 					abstractarrowentity.moveTo(entityLiving.getX(), entityLiving.getY(0.5), entityLiving.getZ(), 0, 0);
 					abstractarrowentity.tickCount = 30;
 					worldIn.addFreshEntity(abstractarrowentity);
-					final int id = GeckoLibUtil.guaranteeIDForStack(stack, (ServerLevel) worldIn);
-					GeckoLibNetwork.syncAnimation(playerentity, this, id, ANIM_OPEN);
-					for (Player otherPlayer : PlayerLookup.tracking(playerentity)) {
-						GeckoLibNetwork.syncAnimation(otherPlayer, this, id, ANIM_OPEN);
-					}
+					triggerAnim(playerentity, GeoItem.getOrAssignId(stack, (ServerLevel)worldIn), "shoot_controller", "firing");
 					worldIn.playSound((Player) null, playerentity.getX(), playerentity.getY(), playerentity.getZ(),
 							SoundEvents.CAMPFIRE_CRACKLE, SoundSource.PLAYERS, 1.0F,
 							1.0F / (worldIn.random.nextFloat() * 0.4F + 1.2F) + 1F * 0.5F);
-					boolean isInsideWaterBlock = playerentity.level.isWaterAt(playerentity.blockPosition());
-					spawnLightSource(entityLiving, isInsideWaterBlock);
 				}
+				boolean isInsideWaterBlock = playerentity.level.isWaterAt(playerentity.blockPosition());
+				spawnLightSource(entityLiving, isInsideWaterBlock);
 			}
 		}
 	}
@@ -261,6 +247,23 @@ public class DrakeGauntletItem extends SwordItem implements IAnimatable, ISyncab
 			target.invulnerableTime = 0;
 			target.hurt(DamageSource.playerAttack((Player) user), 9F);
 		}
+	}
+	
+	@Override
+	public void createRenderer(Consumer<Object> consumer) {
+		consumer.accept(new RenderProvider() {
+			private final DrakeGauntletRender renderer = new DrakeGauntletRender();
+
+			@Override
+			public BlockEntityWithoutLevelRenderer getCustomRenderer() {
+				return this.renderer;
+			}
+		});
+	}
+
+	@Override
+	public Supplier<Object> getRenderProvider() {
+		return this.renderProvider;
 	}
 
 }

@@ -11,12 +11,9 @@ import mod.azure.wotr.WoTRMod;
 import mod.azure.wotr.client.render.entities.DrakeRender;
 import mod.azure.wotr.client.render.entities.projectiles.DrakeFireProjectiletRender;
 import mod.azure.wotr.client.render.entities.projectiles.DrakeGauntletFireProjectileRender;
-import mod.azure.wotr.client.render.items.DrakeGauntletRender;
 import mod.azure.wotr.client.render.items.DrakeSkullBlockRender;
-import mod.azure.wotr.client.render.items.DrakeSkullItemRender;
 import mod.azure.wotr.registry.WoTRBlocks;
 import mod.azure.wotr.registry.WoTREntities;
-import mod.azure.wotr.registry.WoTRItems;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -31,14 +28,13 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import software.bernie.geckolib3.renderers.geo.GeoItemRenderer;
 
 public class WoTRClientMod implements ClientModInitializer {
 
@@ -48,10 +44,8 @@ public class WoTRClientMod implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		KeyBindingHelper.registerKeyBinding(reload);
-		GeoItemRenderer.registerItemRenderer(WoTRItems.DRAKE_GAUNTLET, new DrakeGauntletRender());
 		EntityRendererRegistry.register(WoTREntities.DRAKE, (ctx) -> new DrakeRender(ctx));
 		EntityRendererRegistry.register(WoTREntities.DRAKE_FIRE, (ctx) -> new DrakeFireProjectiletRender(ctx));
-		GeoItemRenderer.registerItemRenderer(WoTRBlocks.DRAKE_SKULL.asItem(), new DrakeSkullItemRender());
 		BlockRenderLayerMap.INSTANCE.putBlock(WoTRBlocks.DRAKE_SKULL, RenderType.translucent());
 		BlockEntityRendererRegistry.register(WoTREntities.DRAKE_SKULL,
 				(BlockEntityRendererProvider.Context rendererDispatcherIn) -> new DrakeSkullBlockRender());
@@ -65,7 +59,7 @@ public class WoTRClientMod implements ClientModInitializer {
 	public class EntityPacketOnClient {
 		@Environment(EnvType.CLIENT)
 		public static void onPacket(Minecraft context, FriendlyByteBuf byteBuf) {
-			EntityType<?> type = Registry.ENTITY_TYPE.byId(byteBuf.readVarInt());
+			EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.byId(byteBuf.readVarInt());
 			UUID entityUUID = byteBuf.readUUID();
 			int entityID = byteBuf.readVarInt();
 			double x = byteBuf.readDouble();
@@ -94,7 +88,7 @@ public class WoTRClientMod implements ClientModInitializer {
 
 		public static Packet<?> createPacket(Entity entity) {
 			FriendlyByteBuf buf = createBuffer();
-			buf.writeVarInt(Registry.ENTITY_TYPE.getId(entity.getType()));
+			buf.writeVarInt(BuiltInRegistries.ENTITY_TYPE.getId(entity.getType()));
 			buf.writeUUID(entity.getUUID());
 			buf.writeVarInt(entity.getId());
 			buf.writeDouble(entity.getX());

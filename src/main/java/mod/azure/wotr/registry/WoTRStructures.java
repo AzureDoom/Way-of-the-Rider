@@ -5,6 +5,7 @@ import com.mojang.serialization.Codec;
 import mod.azure.wotr.WoTRMod;
 import mod.azure.wotr.structures.DragonCaveStructure;
 import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureType;
@@ -17,7 +18,7 @@ public class WoTRStructures {
 	}
 
 	private static <S extends Structure> StructureType<S> register(ResourceLocation id, Codec<S> codec) {
-		return Registry.register(Registry.STRUCTURE_TYPES, id, () -> codec);
+		return Registry.register(BuiltInRegistries.STRUCTURE_TYPE, id, () -> codec);
 	}
 
 }

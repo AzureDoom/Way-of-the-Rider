@@ -3,9 +3,9 @@ package mod.azure.wotr.client.models.items;
 import mod.azure.wotr.WoTRMod;
 import mod.azure.wotr.items.GeckoBlockItem;
 import net.minecraft.resources.ResourceLocation;
-import software.bernie.geckolib3.model.AnimatedGeoModel;
+import software.bernie.geckolib.model.GeoModel;
 
-public class DrakeSkullItemModel extends AnimatedGeoModel<GeckoBlockItem> {
+public class DrakeSkullItemModel extends GeoModel<GeckoBlockItem> {
 	@Override
 	public ResourceLocation getAnimationResource(GeckoBlockItem entity) {
 		return new ResourceLocation(WoTRMod.MODID, "animations/drake_skull.animation.json");
@@ -18,6 +18,6 @@ public class DrakeSkullItemModel extends AnimatedGeoModel<GeckoBlockItem> {
 
 	@Override
 	public ResourceLocation getTextureResource(GeckoBlockItem entity) {
-		return new ResourceLocation(WoTRMod.MODID, "textures/blocks/drake_skull.png");
+		return new ResourceLocation(WoTRMod.MODID, "textures/block/drake_skull.png");
 	}
 }

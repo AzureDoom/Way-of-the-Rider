@@ -10,7 +10,7 @@ import mod.azure.wotr.registry.WoTRItems;
 import mod.azure.wotr.registry.WoTRSounds;
 import mod.azure.wotr.registry.WoTRStructures;
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.client.itemgroup.FabricItemGroupBuilder;
+import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
 import net.minecraft.resources.ResourceLocation;
@@ -26,8 +26,16 @@ public class WoTRMod implements ModInitializer {
 	public static WoTREntities ENTITIES;
 	public static final String MODID = "wotr";
 	public static final ResourceLocation RELOAD = new ResourceLocation(MODID, "reload");
-	public static final CreativeModeTab WoTRItemGroup = FabricItemGroupBuilder.create(new ResourceLocation(MODID, "wotr"))
-			.icon(() -> new ItemStack(WoTRItems.DRAKE_SKULL)).build();
+	public static final CreativeModeTab GENERAL = FabricItemGroup.builder(new ResourceLocation(WoTRMod.MODID, "wotr"))
+			.icon(() -> new ItemStack(WoTRItems.DRAKE_SKULL))
+			.displayItems((enabledFeatures, entries, operatorEnabled) -> {
+				entries.accept(WoTRItems.DRAKE_SKULL);
+				entries.accept(WoTRItems.DRAKE_GAUNTLET);
+				entries.accept(WoTRItems.DRAKE_ARMOR_IRON);
+				entries.accept(WoTRItems.DRAKE_ARMOR_GOLD);
+				entries.accept(WoTRItems.DRAKE_ARMOR_DIAMOND);
+				entries.accept(WoTRItems.DRAKE_SPAWN_EGG);
+			}).build();
 
 	@Override
 	public void onInitialize() {
@@ -41,7 +49,8 @@ public class WoTRMod implements ModInitializer {
 		ServerPlayNetworking.registerGlobalReceiver(WoTRMod.RELOAD,
 				(server, player, serverPlayNetworkHandler, inputPacket, packetSender) -> {
 					if (player.getMainHandItem().getItem() instanceof DrakeGauntletItem) {
-						((DrakeGauntletItem) player.getMainHandItem().getItem()).reload(player, InteractionHand.MAIN_HAND);
+						((DrakeGauntletItem) player.getMainHandItem().getItem()).reload(player,
+								InteractionHand.MAIN_HAND);
 					}
 					;
 				});

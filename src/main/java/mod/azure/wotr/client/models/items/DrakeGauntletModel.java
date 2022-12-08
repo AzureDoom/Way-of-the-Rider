@@ -3,9 +3,9 @@ package mod.azure.wotr.client.models.items;
 import mod.azure.wotr.WoTRMod;
 import mod.azure.wotr.items.DrakeGauntletItem;
 import net.minecraft.resources.ResourceLocation;
-import software.bernie.geckolib3.model.AnimatedGeoModel;
+import software.bernie.geckolib.model.GeoModel;
 
-public class DrakeGauntletModel extends AnimatedGeoModel<DrakeGauntletItem> {
+public class DrakeGauntletModel extends GeoModel<DrakeGauntletItem> {
 	@Override
 	public ResourceLocation getModelResource(DrakeGauntletItem object) {
 		return new ResourceLocation(WoTRMod.MODID, "geo/drake_gauntlet.geo.json");
@@ -13,7 +13,7 @@ public class DrakeGauntletModel extends AnimatedGeoModel<DrakeGauntletItem> {
 
 	@Override
 	public ResourceLocation getTextureResource(DrakeGauntletItem object) {
-		return new ResourceLocation(WoTRMod.MODID, "textures/items/drake_gauntlet.png");
+		return new ResourceLocation(WoTRMod.MODID, "textures/item/drake_gauntlet.png");
 	}
 
 	@Override

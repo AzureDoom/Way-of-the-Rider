@@ -20,16 +20,14 @@ import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
-import software.bernie.geckolib3.core.IAnimatable;
-import software.bernie.geckolib3.core.IAnimationTickable;
-import software.bernie.geckolib3.core.PlayState;
-import software.bernie.geckolib3.core.controller.AnimationController;
-import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
-import software.bernie.geckolib3.core.manager.AnimationData;
-import software.bernie.geckolib3.core.manager.AnimationFactory;
-import software.bernie.geckolib3.util.GeckoLibUtil;
+import software.bernie.geckolib.animatable.GeoEntity;
+import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.core.animation.AnimatableManager.ControllerRegistrar;
+import software.bernie.geckolib.core.animation.AnimationController;
+import software.bernie.geckolib.core.object.PlayState;
+import software.bernie.geckolib.util.GeckoLibUtil;
 
-public abstract class WoTREntity extends AbstractHorse implements IAnimatable, IAnimationTickable {
+public abstract class WoTREntity extends AbstractHorse implements GeoEntity {
 
 	public static final EntityDataAccessor<Integer> STATE = SynchedEntityData.defineId(WoTREntity.class,
 			EntityDataSerializers.INT);
@@ -37,24 +35,22 @@ public abstract class WoTREntity extends AbstractHorse implements IAnimatable, I
 			EntityDataSerializers.INT);
 	private static final EntityDataAccessor<Boolean> DATA_IS_CHARGING = SynchedEntityData.defineId(WoTREntity.class,
 			EntityDataSerializers.BOOLEAN);
-	public AnimationFactory factory = GeckoLibUtil.createFactory(this);
+	private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
 	public WoTREntity(EntityType<? extends AbstractHorse> entityType, Level Level) {
 		super(entityType, Level);
 	}
 
-	public <E extends IAnimatable> PlayState predicate(AnimationEvent<E> event) {
-		return PlayState.CONTINUE;
+	@Override
+	public void registerControllers(ControllerRegistrar controllers) {
+		controllers.add(new AnimationController<>(this, event -> {
+			return PlayState.CONTINUE;
+		}));
 	}
 
 	@Override
-	public void registerControllers(AnimationData data) {
-		data.addAnimationController(new AnimationController<WoTREntity>(this, "idle_controller", 3, this::predicate));
-	}
-
-	@Override
-	public AnimationFactory getFactory() {
-		return this.factory;
+	public AnimatableInstanceCache getAnimatableInstanceCache() {
+		return this.cache;
 	}
 
 	@Override
@@ -135,11 +131,6 @@ public abstract class WoTREntity extends AbstractHorse implements IAnimatable, I
 		if (soundEvent != null) {
 			this.playSound(soundEvent, 0.25F, this.getVoicePitch());
 		}
-	}
-
-	@Override
-	public int tickTimer() {
-		return this.tickCount;
 	}
 
 	public static boolean canSpawn(EntityType<WoTREntity> type, LevelAccessor Level, MobSpawnType reason, BlockPos pos,

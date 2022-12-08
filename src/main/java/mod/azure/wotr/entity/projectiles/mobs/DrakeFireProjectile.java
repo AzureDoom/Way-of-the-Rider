@@ -1,7 +1,6 @@
 package mod.azure.wotr.entity.projectiles.mobs;
 
 import mod.azure.wotr.blocks.tile.TickingLightEntity;
-import mod.azure.wotr.client.WoTRClientMod.EntityPacket;
 import mod.azure.wotr.config.WoTRConfig;
 import mod.azure.wotr.entity.DrakeEntity;
 import mod.azure.wotr.registry.WoTRBlocks;
@@ -12,6 +11,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -48,8 +49,8 @@ public class DrakeFireProjectile extends AbstractHurtingProjectile {
 	}
 
 	@Override
-	public Packet<?> getAddEntityPacket() {
-		return EntityPacket.createPacket(this);
+	public Packet<ClientGamePacketListener> getAddEntityPacket() {
+		return new ClientboundAddEntityPacket(this);
 	}
 
 	@Override
