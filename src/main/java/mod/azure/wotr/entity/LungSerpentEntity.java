@@ -1,7 +1,6 @@
 package mod.azure.wotr.entity;
 
 import java.util.SplittableRandom;
-import java.util.UUID;
 import java.util.function.Predicate;
 
 import org.jetbrains.annotations.Nullable;
@@ -10,31 +9,24 @@ import mod.azure.azurelib.core.animation.AnimatableManager.ControllerRegistrar;
 import mod.azure.azurelib.core.animation.AnimationController;
 import mod.azure.azurelib.core.animation.RawAnimation;
 import mod.azure.wotr.config.WoTRConfig;
-import mod.azure.wotr.entity.tasks.FireProjectileAttack;
-import mod.azure.wotr.items.DrakeArmorItem;
 import mod.azure.wotr.registry.WoTRSounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
-import net.minecraft.world.Container;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.SlotAccess;
 import net.minecraft.world.entity.SpawnGroupData;
-import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.animal.horse.AbstractHorse;
@@ -44,50 +36,33 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import net.tslat.smartbrainlib.api.core.BrainActivityGroup;
-import net.tslat.smartbrainlib.api.core.behaviour.custom.attack.AnimatableMeleeAttack;
-import net.tslat.smartbrainlib.api.core.behaviour.custom.path.SetWalkTargetToAttackTarget;
-import net.tslat.smartbrainlib.api.core.behaviour.custom.target.InvalidateAttackTarget;
 
-public class DrakeEntity extends WoTREntity implements Growable {
+public class LungSerpentEntity extends WoTREntity implements Growable {
 
-	public static final EntityDataAccessor<Float> GROWTH = SynchedEntityData.defineId(DrakeEntity.class,
+	public static final EntityDataAccessor<Float> GROWTH = SynchedEntityData.defineId(LungSerpentEntity.class,
 			EntityDataSerializers.FLOAT);
-	private static final UUID HORSE_ARMOR_BONUS_ID = UUID.fromString("556E1665-8B10-40C8-8F9D-CF9B1667F295");
 
-	public DrakeEntity(EntityType<? extends AbstractHorse> entityType, Level world) {
+	public LungSerpentEntity(EntityType<? extends AbstractHorse> entityType, Level world) {
 		super(entityType, world);
-		this.xpReward = WoTRConfig.drake_exp;
+		this.xpReward = WoTRConfig.lung_serpent_exp;
 	}
 
 	public static AttributeSupplier.Builder createMobAttributes() {
 		return LivingEntity.createLivingAttributes().add(Attributes.FOLLOW_RANGE, 25.0D)
-				.add(Attributes.MAX_HEALTH, WoTRConfig.drake_health)
-				.add(Attributes.ATTACK_DAMAGE, WoTRConfig.drake_melee).add(Attributes.JUMP_STRENGTH, 3)
-				.add(Attributes.MOVEMENT_SPEED, 0.25D).add(Attributes.ATTACK_KNOCKBACK, 0.0D);
+				.add(Attributes.MAX_HEALTH, WoTRConfig.lung_serpent_health).add(Attributes.ATTACK_DAMAGE, 0)
+				.add(Attributes.JUMP_STRENGTH, 0).add(Attributes.MOVEMENT_SPEED, 0.25D)
+				.add(Attributes.ATTACK_KNOCKBACK, 0.0D);
 	}
 
 	@Override
 	public void registerControllers(ControllerRegistrar controllers) {
-		controllers.add(new AnimationController<>(this, "idle_controller", 0, event -> {
-			if (!(this.entityData.get(STATE) == 1)
-					&& (animationSpeedOld < 0.65F && !(animationSpeedOld > -0.10F && animationSpeedOld < 0.02F))
-					&& this.onGround && !this.hurtMarked)
+		controllers.add(new AnimationController<>(this, "idle_controller", 10, event -> {
+			if (event.isMoving() && !this.hurtMarked)
 				return event.setAndContinue(RawAnimation.begin().thenLoop("moving"));
-			if (!(this.entityData.get(STATE) == 1) && animationSpeedOld >= 0.65F && this.onGround && !this.wasEyeInWater
-					&& !this.hurtMarked)
-				return event.setAndContinue(RawAnimation.begin().thenLoop("running"));
-//			if (!this.onGround && !this.wasTouchingWater
-//					&& !(this.dead || this.getHealth() < 0.01 || this.isDeadOrDying()))
-//				return event.setAndContinue(RawAnimation.begin().thenLoop("jump"));
-			if ((this.entityData.get(STATE) == 2) && !(this.dead || this.getHealth() < 0.01 || this.isDeadOrDying()))
-				return event.setAndContinue(RawAnimation.begin().thenPlayXTimes("attack_claw", 1));
 			if ((this.entityData.get(STATE) == 1) && !(this.dead || this.getHealth() < 0.01 || this.isDeadOrDying()))
-				return event.setAndContinue(RawAnimation.begin().thenPlayXTimes("attack_breath", 1));
+				return event.setAndContinue(RawAnimation.begin().thenPlayXTimes("repel", 1));
 			if ((this.dead || this.getHealth() < 0.01 || this.isDeadOrDying()))
 				return event.setAndContinue(RawAnimation.begin().thenPlayAndHold("death"));
 			return event.setAndContinue(RawAnimation.begin().thenLoop("idle"));
@@ -95,24 +70,17 @@ public class DrakeEntity extends WoTREntity implements Growable {
 	}
 
 	@Override
-	public BrainActivityGroup<WoTREntity> getFightTasks() {
-		return BrainActivityGroup.fightTasks(
-				new InvalidateAttackTarget<>().stopIf(
-						target -> !target.isAlive() || target instanceof Player && ((Player) target).isCreative()),
-				new SetWalkTargetToAttackTarget<>().speedMod(1.02F),
-				new AnimatableMeleeAttack<>(15).whenStarting(entity -> setAggressive(true)).whenStarting(entity -> setAttackingState(2))
-						.whenStopping(entity -> setAggressive(false)).whenStopping(entity -> setAttackingState(0)),
-				new FireProjectileAttack<>(13).whenStarting(entity -> setAggressive(true))
-						.whenStopping(entity -> setAggressive(false)));
-	}
-
-	@Override
 	protected SoundEvent getAmbientSound() {
 		return WoTRSounds.DRAKE_IDLE;
 	}
 
+	@Override
+	protected void playStepSound(BlockPos pos, BlockState state) {
+		return;
+	}
+
 	public int getVariant() {
-		return Mth.clamp((Integer) this.entityData.get(VARIANT), 1, 3);
+		return Mth.clamp((Integer) this.entityData.get(VARIANT), 1, 4);
 	}
 
 	public int getVariants() {
@@ -138,21 +106,13 @@ public class DrakeEntity extends WoTREntity implements Growable {
 		super.addAdditionalSaveData(nbt);
 		nbt.putInt("Variant", this.getVariant());
 		nbt.putFloat("growth", getGrowth());
-		if (!this.inventory.getItem(1).isEmpty()) {
-			nbt.put("ArmorItem", this.inventory.getItem(1).save(new CompoundTag()));
-		}
 	}
 
 	@Override
 	public void readAdditionalSaveData(CompoundTag nbt) {
-		ItemStack itemStack;
 		super.readAdditionalSaveData(nbt);
 		this.setVariant(nbt.getInt("Variant"));
 		this.setGrowth(nbt.getFloat("growth"));
-		if (nbt.contains("ArmorItem", Tag.TAG_COMPOUND)
-				&& !(itemStack = ItemStack.of(nbt.getCompound("ArmorItem"))).isEmpty() && this.isArmor(itemStack)) {
-			this.inventory.setItem(1, itemStack);
-		}
 		this.updateContainerEquipment();
 	}
 
@@ -195,55 +155,14 @@ public class DrakeEntity extends WoTREntity implements Growable {
 		return true;
 	}
 
-	public ItemStack getArmorType() {
-		return this.getItemBySlot(EquipmentSlot.CHEST);
-	}
-
-	private void equipArmor(ItemStack stack) {
-		this.setItemSlot(EquipmentSlot.CHEST, stack);
-		this.setDropChance(EquipmentSlot.CHEST, 0.0f);
-	}
-
-	@Override
-	protected void updateContainerEquipment() {
-		if (this.level.isClientSide()) {
-			return;
-		}
-		super.updateContainerEquipment();
-		this.setArmorTypeFromStack(this.inventory.getItem(1));
-		this.setDropChance(EquipmentSlot.CHEST, 0.0f);
-	}
-
-	private void setArmorTypeFromStack(ItemStack stack) {
-		this.equipArmor(stack);
-		if (!this.level.isClientSide()) {
-			int i;
-			this.getAttribute(Attributes.ARMOR).removeModifier(HORSE_ARMOR_BONUS_ID);
-			if (this.isArmor(stack) && (i = ((DrakeArmorItem) stack.getItem()).getBonus()) != 0) {
-				this.getAttribute(Attributes.ARMOR).addTransientModifier(new AttributeModifier(HORSE_ARMOR_BONUS_ID,
-						"Horse armor bonus", (double) i, AttributeModifier.Operation.ADDITION));
-			}
-		}
-	}
-
-	@Override
-	public void containerChanged(Container sender) {
-		ItemStack itemStack = this.getArmorType();
-		super.containerChanged(sender);
-		ItemStack itemStack2 = this.getArmorType();
-		if (this.age > 20 && this.isArmor(itemStack2) && itemStack != itemStack2) {
-			this.playSound(SoundEvents.HORSE_ARMOR, 0.5f, 1.0f);
-		}
-	}
-
 	@Override
 	public boolean canWearArmor() {
-		return true;
+		return false;
 	}
 
 	@Override
 	public boolean isArmor(ItemStack item) {
-		return item.getItem() instanceof DrakeArmorItem;
+		return false;
 	}
 
 	@Override
@@ -266,7 +185,7 @@ public class DrakeEntity extends WoTREntity implements Growable {
 			}
 			boolean bl = !this.isBaby() && !this.isSaddled() && itemStack.is(Items.SADDLE)
 					&& this.getGrowth() >= this.getMaxGrowth();
-			if (this.isArmor(itemStack) || bl) {
+			if (bl) {
 				this.openCustomInventoryScreen(player);
 				return InteractionResult.sidedSuccess(this.level.isClientSide);
 			}
@@ -282,6 +201,10 @@ public class DrakeEntity extends WoTREntity implements Growable {
 		if (this.isSaddled())
 			this.doPlayerRide(player);
 		return InteractionResult.sidedSuccess(this.level.isClientSide);
+	}
+
+	@Override
+	protected void executeRidersJump(float f, float g, float h) {
 	}
 
 	@Override
@@ -317,7 +240,7 @@ public class DrakeEntity extends WoTREntity implements Growable {
 
 			@Override
 			public ItemStack get() {
-				return DrakeEntity.this.inventory.getItem(slot);
+				return LungSerpentEntity.this.inventory.getItem(slot);
 			}
 
 			@Override
@@ -325,8 +248,8 @@ public class DrakeEntity extends WoTREntity implements Growable {
 				if (!predicate.test(stack)) {
 					return false;
 				}
-				DrakeEntity.this.inventory.setItem(slot, stack);
-				DrakeEntity.this.updateContainerEquipment();
+				LungSerpentEntity.this.inventory.setItem(slot, stack);
+				LungSerpentEntity.this.updateContainerEquipment();
 				return true;
 			}
 		};
@@ -376,12 +299,22 @@ public class DrakeEntity extends WoTREntity implements Growable {
 		} else if (livingEntity instanceof Player) {
 			this.setDeltaMovement(Vec3.ZERO);
 		}
-		if (this.onGround) {
-			this.playerJumpPendingScale = 0.0f;
-			this.setIsJumping(false);
-		}
+		this.playerJumpPendingScale = 0.0f;
+		this.setIsJumping(false);
 		this.calculateEntityAnimation(this, false);
 		this.tryCheckInsideBlocks();
+	}
+
+	@Override
+	public boolean isNoGravity() {
+		return true;
+	}
+
+	protected void checkFallDamage(double y, boolean onGroundIn, BlockState state, BlockPos pos) {
+	}
+
+	public boolean onClimbable() {
+		return false;
 	}
 
 	@Override
@@ -414,9 +347,6 @@ public class DrakeEntity extends WoTREntity implements Growable {
 
 	@Override
 	public boolean causeFallDamage(float fallDistance, float damageMultiplier, DamageSource damageSource) {
-		if (fallDistance > 1.0f) {
-			this.playSound(SoundEvents.HORSE_LAND, 0.4f, 1.0f);
-		}
 		return false;
 	}
 
@@ -438,32 +368,6 @@ public class DrakeEntity extends WoTREntity implements Growable {
 	@Override
 	public void setSecondsOnFire(int seconds) {
 		super.setSecondsOnFire(0);
-	}
-
-	@Override
-	protected void playStepSound(BlockPos pos, BlockState state) {
-		if (state.getMaterial().isLiquid()) {
-			return;
-		}
-		BlockState blockState = this.level.getBlockState(pos.above());
-		SoundType blockSoundGroup = state.getSoundType();
-		if (blockState.is(Blocks.SNOW)) {
-			blockSoundGroup = blockState.getSoundType();
-		} else {
-			++this.gallopSoundCounter;
-			if (this.gallopSoundCounter > 5 && this.gallopSoundCounter % 3 == 0) {
-				this.playSound(SoundEvents.RAVAGER_STEP, blockSoundGroup.getVolume() * 0.15f,
-						blockSoundGroup.getPitch());
-			} else if (this.gallopSoundCounter <= 5) {
-				this.playSound(SoundEvents.RAVAGER_STEP, blockSoundGroup.getVolume() * 0.15f,
-						blockSoundGroup.getPitch());
-			}
-		}
-	}
-
-	@Override
-	protected void playJumpSound() {
-		this.playSound(SoundEvents.ENDER_DRAGON_FLAP, 0.4f, 1.0f);
 	}
 
 }

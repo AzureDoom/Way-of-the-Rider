@@ -1,9 +1,10 @@
 package mod.azure.wotr.entity.projectiles.mobs;
 
-import mod.azure.wotr.blocks.tile.TickingLightEntity;
+import mod.azure.azurelib.AzureLibMod;
+import mod.azure.azurelib.entities.TickingLightEntity;
+import mod.azure.azurelib.network.packet.EntityPacket;
 import mod.azure.wotr.config.WoTRConfig;
 import mod.azure.wotr.entity.DrakeEntity;
-import mod.azure.wotr.registry.WoTRBlocks;
 import mod.azure.wotr.registry.WoTREntities;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -12,7 +13,6 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -26,7 +26,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
-import net.minecraft.world.phys.HitResult;
 
 public class DrakeFireProjectile extends AbstractHurtingProjectile {
 
@@ -50,7 +49,7 @@ public class DrakeFireProjectile extends AbstractHurtingProjectile {
 
 	@Override
 	public Packet<ClientGamePacketListener> getAddEntityPacket() {
-		return new ClientboundAddEntityPacket(this);
+		return EntityPacket.createPacket(this);
 	}
 
 	@Override
@@ -102,7 +101,7 @@ public class DrakeFireProjectile extends AbstractHurtingProjectile {
 			lightBlockPos = findFreeSpace(level, blockPosition(), 2);
 			if (lightBlockPos == null)
 				return;
-			level.setBlockAndUpdate(lightBlockPos, WoTRBlocks.TICKING_LIGHT_BLOCK.defaultBlockState());
+			level.setBlockAndUpdate(lightBlockPos, AzureLibMod.TICKING_LIGHT_BLOCK.defaultBlockState());
 		} else if (checkDistance(lightBlockPos, blockPosition(), 2)) {
 			BlockEntity blockEntity = level.getBlockEntity(lightBlockPos);
 			if (blockEntity instanceof TickingLightEntity) {
@@ -134,7 +133,7 @@ public class DrakeFireProjectile extends AbstractHurtingProjectile {
 				for (int z : offsets) {
 					BlockPos offsetPos = blockPos.offset(x, y, z);
 					BlockState state = world.getBlockState(offsetPos);
-					if (state.isAir() || state.getBlock().equals(WoTRBlocks.TICKING_LIGHT_BLOCK))
+					if (state.isAir() || state.getBlock().equals(AzureLibMod.TICKING_LIGHT_BLOCK))
 						return offsetPos;
 				}
 
@@ -145,34 +144,26 @@ public class DrakeFireProjectile extends AbstractHurtingProjectile {
 	protected void onHitBlock(BlockHitResult blockHitResult) {
 		BlockPos blockPos;
 		super.onHitBlock(blockHitResult);
-		if (this.level.isClientSide()) {
+		if (this.level.isClientSide())
 			return;
-		}
 		Entity entity = this.getOwner();
 		if ((!(entity instanceof Mob) || this.level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) && this.level
 				.isEmptyBlock(blockPos = blockHitResult.getBlockPos().relative(blockHitResult.getDirection()))) {
 			this.level.setBlockAndUpdate(blockPos, BaseFireBlock.getState(this.level, blockPos));
 		}
-	}
-
-	@Override
-	protected void onHit(HitResult result) {
-		super.onHit(result);
-		if (!this.level.isClientSide()) {
-			this.remove(Entity.RemovalReason.DISCARDED);
-		}
+		this.remove(Entity.RemovalReason.DISCARDED);
 	}
 
 	@Override
 	protected void onHitEntity(EntityHitResult entityHitResult) {
 		super.onHitEntity(entityHitResult);
-		if (!this.level.isClientSide()) {
-			Entity entity = entityHitResult.getEntity();
-			if (!(entity instanceof DrakeEntity))
-				entity.hurt(DamageSource.indirectMagic(this, entity), WoTRConfig.drake_ranged);
-			this.remove(Entity.RemovalReason.DISCARDED);
-			entity.setSecondsOnFire(15);
-		}
+		if (this.level.isClientSide())
+			return;
+		Entity entity = entityHitResult.getEntity();
+		if (!(entity instanceof DrakeEntity))
+			entity.hurt(DamageSource.indirectMagic(this, entity), WoTRConfig.drake_ranged);
+		this.remove(Entity.RemovalReason.DISCARDED);
+		entity.setSecondsOnFire(15);
 	}
 
 	@Override

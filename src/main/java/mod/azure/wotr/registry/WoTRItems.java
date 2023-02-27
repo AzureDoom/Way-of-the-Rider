@@ -1,5 +1,6 @@
 package mod.azure.wotr.registry;
 
+import mod.azure.azurelib.items.AzureSpawnEgg;
 import mod.azure.wotr.WoTRMod;
 import mod.azure.wotr.items.DrakeArmorItem;
 import mod.azure.wotr.items.DrakeGauntletItem;
@@ -8,8 +9,6 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.SpawnEggItem;
-import software.bernie.example.registry.EntityRegistry;
 
 public class WoTRItems {
 
@@ -29,8 +28,12 @@ public class WoTRItems {
 			new ResourceLocation(WoTRMod.MODID, "drake_skull"),
 			new GeckoBlockItem(WoTRBlocks.DRAKE_SKULL, new Item.Properties().fireResistant()));
 
-	public static SpawnEggItem DRAKE_SPAWN_EGG = Registry.register(BuiltInRegistries.ITEM,
+	public static AzureSpawnEgg DRAKE_SPAWN_EGG = Registry.register(BuiltInRegistries.ITEM,
 			new ResourceLocation(WoTRMod.MODID, "drake_spawn_egg"),
-			new SpawnEggItem(EntityRegistry.BAT, 0x58252d, 0x352728, new Item.Properties()));
+			new AzureSpawnEgg(WoTREntities.DRAKE, 0x58252d, 0x352728));
+
+	public static AzureSpawnEgg LUNG_SERPENT_SPAWN_EGG = Registry.register(BuiltInRegistries.ITEM,
+			new ResourceLocation(WoTRMod.MODID, "lung_serpent_spawn_egg"),
+			new AzureSpawnEgg(WoTREntities.LUNG_SERPENT, 0xefe7c8, 0x833e28));
 
 }

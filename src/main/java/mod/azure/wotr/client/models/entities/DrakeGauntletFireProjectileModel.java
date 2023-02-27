@@ -4,7 +4,7 @@ import mod.azure.wotr.WoTRMod;
 import mod.azure.wotr.entity.projectiles.items.DrakeGauntletFireProjectile;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
-import software.bernie.geckolib.model.GeoModel;
+import mod.azure.azurelib.model.GeoModel;
 
 public class DrakeGauntletFireProjectileModel extends GeoModel<DrakeGauntletFireProjectile> {
 	@Override

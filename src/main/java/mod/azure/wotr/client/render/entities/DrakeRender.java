@@ -2,13 +2,13 @@ package mod.azure.wotr.client.render.entities;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 
+import mod.azure.azurelib.renderer.GeoEntityRenderer;
 import mod.azure.wotr.client.models.entities.DrakeModel;
 import mod.azure.wotr.client.render.entities.layer.DrakeArmorLayer;
 import mod.azure.wotr.client.render.entities.layer.DrakeSaddleLayer;
 import mod.azure.wotr.entity.DrakeEntity;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
-import software.bernie.geckolib.renderer.GeoEntityRenderer;
 
 public class DrakeRender extends GeoEntityRenderer<DrakeEntity> {
 

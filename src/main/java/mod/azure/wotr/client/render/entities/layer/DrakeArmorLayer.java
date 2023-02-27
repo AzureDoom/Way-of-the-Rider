@@ -3,6 +3,9 @@ package mod.azure.wotr.client.render.entities.layer;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 
+import mod.azure.azurelib.cache.object.BakedGeoModel;
+import mod.azure.azurelib.renderer.GeoRenderer;
+import mod.azure.azurelib.renderer.layer.GeoRenderLayer;
 import mod.azure.wotr.WoTRMod;
 import mod.azure.wotr.entity.DrakeEntity;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -10,9 +13,6 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import software.bernie.geckolib.cache.object.BakedGeoModel;
-import software.bernie.geckolib.renderer.GeoRenderer;
-import software.bernie.geckolib.renderer.layer.GeoRenderLayer;
 
 public class DrakeArmorLayer extends GeoRenderLayer<DrakeEntity> {
 

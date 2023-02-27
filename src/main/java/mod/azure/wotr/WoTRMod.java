@@ -1,8 +1,10 @@
 package mod.azure.wotr;
 
-import mod.azure.wotr.config.CustomMidnightConfig;
+import eu.midnightdust.lib.config.MidnightConfig;
+import mod.azure.azurelib.AzureLib;
 import mod.azure.wotr.config.WoTRConfig;
 import mod.azure.wotr.entity.DrakeEntity;
+import mod.azure.wotr.entity.LungSerpentEntity;
 import mod.azure.wotr.items.DrakeGauntletItem;
 import mod.azure.wotr.registry.WoTRBlocks;
 import mod.azure.wotr.registry.WoTREntities;
@@ -35,17 +37,19 @@ public class WoTRMod implements ModInitializer {
 				entries.accept(WoTRItems.DRAKE_ARMOR_GOLD);
 				entries.accept(WoTRItems.DRAKE_ARMOR_DIAMOND);
 				entries.accept(WoTRItems.DRAKE_SPAWN_EGG);
+				entries.accept(WoTRItems.LUNG_SERPENT_SPAWN_EGG);
 			}).build();
 
 	@Override
 	public void onInitialize() {
-		CustomMidnightConfig.init(MODID, WoTRConfig.class);
+		MidnightConfig.init(MODID, WoTRConfig.class);
 		ITEMS = new WoTRItems();
 		BLOCKS = new WoTRBlocks();
 		SOUNDS = new WoTRSounds();
 		ENTITIES = new WoTREntities();
 		WoTRStructures.registerStructureFeatures();
 		FabricDefaultAttributeRegistry.register(WoTREntities.DRAKE, DrakeEntity.createMobAttributes());
+		FabricDefaultAttributeRegistry.register(WoTREntities.LUNG_SERPENT, LungSerpentEntity.createMobAttributes());
 		ServerPlayNetworking.registerGlobalReceiver(WoTRMod.RELOAD,
 				(server, player, serverPlayNetworkHandler, inputPacket, packetSender) -> {
 					if (player.getMainHandItem().getItem() instanceof DrakeGauntletItem) {
@@ -54,5 +58,6 @@ public class WoTRMod implements ModInitializer {
 					}
 					;
 				});
+		AzureLib.initialize();
 	}
 }

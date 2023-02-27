@@ -4,14 +4,15 @@ buildscript {
     	maven { url  = "https://plugins.gradle.org/m2/" }
         maven { url = 'https://maven.parchmentmc.org' }
     }
+    dependencies {
+        classpath "gradle.plugin.com.github.johnrengelman:shadow:7.1.0"
+    }
 }
-
-import groovy.json.JsonSlurper
-import groovy.json.JsonOutput
 
 plugins {
 	id 'fabric-loom' version '1.0-SNAPSHOT'
 	id 'maven-publish'
+    id 'com.github.johnrengelman.shadow' version '7.1.0'
     id 'com.matthewprenger.cursegradle' version '1.4.0'
     id "com.modrinth.minotaur" version "2.+"
 }
@@ -30,26 +31,38 @@ group = project.maven_group
 repositories {
 	maven { url "https://cfa2.cursemaven.com" }
     maven { url "https://plugins.gradle.org/m2/" }
-    maven { url 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/' }
+    maven { url 'https://dl.cloudsmith.io/public/azuredoom-mods/azurelib/maven/' }
     maven { url "https://maven.shedaniel.me/" }
 	maven { url = "https://maven.terraformersmc.com/" }
 	maven { url = "https://ladysnake.jfrog.io/artifactory/mods" }
 	maven { url = "https://maven.kosmx.dev/" }
 	maven { url 'https://jitpack.io' }
 	maven { url = 'https://maven.parchmentmc.org' }
+	maven { url 'https://api.modrinth.com/maven' }
+}
+
+configurations {
+    shade
 }
 
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings loom.officialMojangMappings()
-	//mappings( loom.layered() {
-		//officialMojangMappings()
-		//parchment("org.parchmentmc.data:parchment-1.19.2:2022.08.14@zip")
-	//})
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-    modImplementation 'software.bernie.geckolib:geckolib-fabric-1.19.3:4.0.0'
-	modImplementation ("com.terraformersmc:modmenu:5.0.0-alpha.4")
+  	modImplementation 'mod.azure.azurelib:azurelib-fabric-1.19.3:1.0.3'
+	modImplementation "maven.modrinth:midnightlib:1.1.0-fabric"
+    shade group: 'maven.modrinth', name: 'midnightlib', version: '1.1.0-fabric'
+	modImplementation ("com.terraformersmc:modmenu:5.0.2")
+	modCompileOnly "curse.maven:SBL-661293:4277537-sources-4277538"
+}
+
+shadowJar {
+    configurations = [project.configurations.shade]
+    from sourceSets.main.output
+    duplicatesStrategy = 'exclude'
+    relocate 'eu.midnightdust', 'mod.azure.wotr.shadowed.midnightlib'
+    classifier 'dev'
 }
 
 processResources {
@@ -83,6 +96,15 @@ jar {
 	}
 }
 
+artifacts {
+    archives shadowJar
+}
+
+remapJar {
+    dependsOn(shadowJar)
+    inputFile = shadowJar.archiveFile
+}
+
 if (file('key.properties').exists()) {
     curseforge {
 
@@ -96,13 +118,14 @@ if (file('key.properties').exists()) {
         	releaseType = "release"
         	changelogType = 'text'
         	changelog = file('CHANGELOG.txt')
-			addGameVersion("1.19.2")
+			addGameVersion("1.19.3")
 			addGameVersion("Fabric")
 			addGameVersion("Java 17")
 
         	relations {
             	requiredDependency 'fabric-api'  
-            	requiredDependency 'geckolib'   
+            	requiredDependency 'azurelib'   
+            	requiredDependency 'smartbrainlib' 
         	}
         	mainArtifact(remapJar)
 
@@ -111,8 +134,29 @@ if (file('key.properties').exists()) {
         	}
     	}
     	options {
-    		//debug = true
         	forgeGradleIntegration = false
     	}
     }
+}
+
+if (file('key.properties').exists()) {
+	modrinth {
+		def modrinthProp = new Properties()
+		File secretPropsFile = file("key.properties")
+		modrinthProp.load(secretPropsFile.newInputStream())
+		
+		token = modrinthProp.getProperty('modrinthKey')
+		projectId = 'QWM70Su7' 
+		versionNumber = project.mod_version 
+		versionName = 'Fabric 1.19'
+		uploadFile = remapJar 
+		changelog = rootProject.file("CHANGELOG.txt").text
+		gameVersions = ['1.19.3']
+		loaders = ['fabric','quilt']
+		dependencies { 
+        	required.project "azurelib"
+        	required.project "smartbrainlib"
+        	required.project "fabric-api"
+   		}
+	}
 }

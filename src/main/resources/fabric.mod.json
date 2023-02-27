@@ -30,7 +30,7 @@
 		"fabric": "*",
 		"minecraft": ">=1.19.3",
 		"java": ">=17",
-		"geckolib": ">=4.0.0"
+		"azurelib": ">=1.0.2"
 	},
 	"suggests": {
 		"another-mod": "*"
