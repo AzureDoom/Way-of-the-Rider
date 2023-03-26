@@ -28,17 +28,19 @@ public class WoTRMod implements ModInitializer {
 	public static WoTREntities ENTITIES;
 	public static final String MODID = "wotr";
 	public static final ResourceLocation RELOAD = new ResourceLocation(MODID, "reload");
-	public static final CreativeModeTab GENERAL = FabricItemGroup.builder(new ResourceLocation(WoTRMod.MODID, "wotr"))
-			.icon(() -> new ItemStack(WoTRItems.DRAKE_SKULL))
-			.displayItems((enabledFeatures, entries, operatorEnabled) -> {
-				entries.accept(WoTRItems.DRAKE_SKULL);
-				entries.accept(WoTRItems.DRAKE_GAUNTLET);
-				entries.accept(WoTRItems.DRAKE_ARMOR_IRON);
-				entries.accept(WoTRItems.DRAKE_ARMOR_GOLD);
-				entries.accept(WoTRItems.DRAKE_ARMOR_DIAMOND);
-				entries.accept(WoTRItems.DRAKE_SPAWN_EGG);
-				entries.accept(WoTRItems.LUNG_SERPENT_SPAWN_EGG);
-			}).build();
+	public static final CreativeModeTab GENERAL = FabricItemGroup.builder(new ResourceLocation(WoTRMod.MODID, "wotr")).icon(() -> new ItemStack(WoTRItems.DRAKE_SKULL)).displayItems((context, entries) -> {
+		entries.accept(WoTRItems.DRAKE_SKULL);
+		entries.accept(WoTRItems.DRAKE_GAUNTLET);
+		entries.accept(WoTRItems.DRAKE_ARMOR_IRON);
+		entries.accept(WoTRItems.DRAKE_ARMOR_GOLD);
+		entries.accept(WoTRItems.DRAKE_ARMOR_DIAMOND);
+		entries.accept(WoTRItems.DRAKE_SPAWN_EGG);
+		entries.accept(WoTRItems.LUNG_SERPENT_SPAWN_EGG);
+	}).build();
+
+	public static final ResourceLocation modResource(String name) {
+		return new ResourceLocation(MODID, name);
+	}
 
 	@Override
 	public void onInitialize() {
@@ -50,14 +52,10 @@ public class WoTRMod implements ModInitializer {
 		WoTRStructures.registerStructureFeatures();
 		FabricDefaultAttributeRegistry.register(WoTREntities.DRAKE, DrakeEntity.createMobAttributes());
 		FabricDefaultAttributeRegistry.register(WoTREntities.LUNG_SERPENT, LungSerpentEntity.createMobAttributes());
-		ServerPlayNetworking.registerGlobalReceiver(WoTRMod.RELOAD,
-				(server, player, serverPlayNetworkHandler, inputPacket, packetSender) -> {
-					if (player.getMainHandItem().getItem() instanceof DrakeGauntletItem) {
-						((DrakeGauntletItem) player.getMainHandItem().getItem()).reload(player,
-								InteractionHand.MAIN_HAND);
-					}
-					;
-				});
+		ServerPlayNetworking.registerGlobalReceiver(WoTRMod.RELOAD, (server, player, serverPlayNetworkHandler, inputPacket, packetSender) -> {
+			if (player.getMainHandItem().getItem() instanceof DrakeGauntletItem)
+				((DrakeGauntletItem) player.getMainHandItem().getItem()).reload(player, InteractionHand.MAIN_HAND);
+		});
 		AzureLib.initialize();
 	}
 }

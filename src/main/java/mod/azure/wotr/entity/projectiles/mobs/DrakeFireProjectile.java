@@ -13,7 +13,6 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -22,8 +21,6 @@ import net.minecraft.world.entity.projectile.AbstractHurtingProjectile;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseFireBlock;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 
@@ -42,8 +39,7 @@ public class DrakeFireProjectile extends AbstractHurtingProjectile {
 		super(WoTREntities.DRAKE_FIRE, shooter, accelX, accelY, accelZ, worldIn);
 	}
 
-	public DrakeFireProjectile(Level worldIn, double x, double y, double z, double accelX, double accelY,
-			double accelZ) {
+	public DrakeFireProjectile(Level worldIn, double x, double y, double z, double accelX, double accelY, double accelZ) {
 		super(WoTREntities.DRAKE_FIRE, x, y, z, accelX, accelY, accelZ, worldIn);
 	}
 
@@ -72,27 +68,21 @@ public class DrakeFireProjectile extends AbstractHurtingProjectile {
 
 	@Override
 	public boolean isNoGravity() {
-		if (this.isUnderWater()) {
+		if (this.isUnderWater())
 			return false;
-		} else {
-			return true;
-		}
+		return true;
 	}
 
 	@Override
 	public void tick() {
 		super.tick();
-		if (this.ticksInAir >= 80) {
+		if (this.ticksInAir >= 80)
 			this.remove(Entity.RemovalReason.DISCARDED);
-		}
-		boolean isInsideWaterBlock = level.isWaterAt(blockPosition());
+		var isInsideWaterBlock = level.isWaterAt(blockPosition());
 		spawnLightSource(isInsideWaterBlock);
 		if (this.level.isClientSide() && this.tickCount > 5) {
-			double d2 = this.getX() + (this.random.nextDouble() * 2.0D - 1.0D) * (double) this.getBbWidth() * 0.5D;
-			double e2 = this.getY() + 0.05D + this.random.nextDouble();
-			double f2 = this.getZ() + (this.random.nextDouble() * 2.0D - 1.0D) * (double) this.getBbWidth() * 0.5D;
-			this.level.addParticle(ParticleTypes.FLAME, true, d2, e2, f2, 0, 0, 0);
-			this.level.addParticle(ParticleTypes.SMOKE, true, d2, e2, f2, 0, 0, 0);
+			this.level.addParticle(ParticleTypes.FLAME, true, this.getX() + (this.random.nextDouble() * 2.0D - 1.0D) * (double) this.getBbWidth() * 0.5D, this.getY() + 0.05D + this.random.nextDouble(), this.getZ() + (this.random.nextDouble() * 2.0D - 1.0D) * (double) this.getBbWidth() * 0.5D, 0, 0, 0);
+			this.level.addParticle(ParticleTypes.SMOKE, true, this.getX() + (this.random.nextDouble() * 2.0D - 1.0D) * (double) this.getBbWidth() * 0.5D, this.getY() + 0.05D + this.random.nextDouble(), this.getZ() + (this.random.nextDouble() * 2.0D - 1.0D) * (double) this.getBbWidth() * 0.5D, 0, 0, 0);
 		}
 	}
 
@@ -103,36 +93,34 @@ public class DrakeFireProjectile extends AbstractHurtingProjectile {
 				return;
 			level.setBlockAndUpdate(lightBlockPos, AzureLibMod.TICKING_LIGHT_BLOCK.defaultBlockState());
 		} else if (checkDistance(lightBlockPos, blockPosition(), 2)) {
-			BlockEntity blockEntity = level.getBlockEntity(lightBlockPos);
-			if (blockEntity instanceof TickingLightEntity) {
+			var blockEntity = level.getBlockEntity(lightBlockPos);
+			if (blockEntity instanceof TickingLightEntity)
 				((TickingLightEntity) blockEntity).refresh(isInWaterBlock ? 20 : 0);
-			} else
+			else
 				lightBlockPos = null;
 		} else
 			lightBlockPos = null;
 	}
 
 	private boolean checkDistance(BlockPos blockPosA, BlockPos blockPosB, int distance) {
-		return Math.abs(blockPosA.getX() - blockPosB.getX()) <= distance
-				&& Math.abs(blockPosA.getY() - blockPosB.getY()) <= distance
-				&& Math.abs(blockPosA.getZ() - blockPosB.getZ()) <= distance;
+		return Math.abs(blockPosA.getX() - blockPosB.getX()) <= distance && Math.abs(blockPosA.getY() - blockPosB.getY()) <= distance && Math.abs(blockPosA.getZ() - blockPosB.getZ()) <= distance;
 	}
 
 	private BlockPos findFreeSpace(Level world, BlockPos blockPos, int maxDistance) {
 		if (blockPos == null)
 			return null;
 
-		int[] offsets = new int[maxDistance * 2 + 1];
+		var offsets = new int[maxDistance * 2 + 1];
 		offsets[0] = 0;
-		for (int i = 2; i <= maxDistance * 2; i += 2) {
+		for (var i = 2; i <= maxDistance * 2; i += 2) {
 			offsets[i - 1] = i / 2;
 			offsets[i] = -i / 2;
 		}
-		for (int x : offsets)
-			for (int y : offsets)
-				for (int z : offsets) {
-					BlockPos offsetPos = blockPos.offset(x, y, z);
-					BlockState state = world.getBlockState(offsetPos);
+		for (var x : offsets)
+			for (var y : offsets)
+				for (var z : offsets) {
+					var offsetPos = blockPos.offset(x, y, z);
+					var state = world.getBlockState(offsetPos);
 					if (state.isAir() || state.getBlock().equals(AzureLibMod.TICKING_LIGHT_BLOCK))
 						return offsetPos;
 				}
@@ -146,11 +134,9 @@ public class DrakeFireProjectile extends AbstractHurtingProjectile {
 		super.onHitBlock(blockHitResult);
 		if (this.level.isClientSide())
 			return;
-		Entity entity = this.getOwner();
-		if ((!(entity instanceof Mob) || this.level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) && this.level
-				.isEmptyBlock(blockPos = blockHitResult.getBlockPos().relative(blockHitResult.getDirection()))) {
+		var entity = this.getOwner();
+		if ((!(entity instanceof Mob) || this.level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) && this.level.isEmptyBlock(blockPos = blockHitResult.getBlockPos().relative(blockHitResult.getDirection())))
 			this.level.setBlockAndUpdate(blockPos, BaseFireBlock.getState(this.level, blockPos));
-		}
 		this.remove(Entity.RemovalReason.DISCARDED);
 	}
 
@@ -159,9 +145,9 @@ public class DrakeFireProjectile extends AbstractHurtingProjectile {
 		super.onHitEntity(entityHitResult);
 		if (this.level.isClientSide())
 			return;
-		Entity entity = entityHitResult.getEntity();
+		var entity = entityHitResult.getEntity();
 		if (!(entity instanceof DrakeEntity))
-			entity.hurt(DamageSource.indirectMagic(this, entity), WoTRConfig.drake_ranged);
+			entity.hurt(damageSources().indirectMagic(this, entity), WoTRConfig.drake_ranged);
 		this.remove(Entity.RemovalReason.DISCARDED);
 		entity.setSecondsOnFire(15);
 	}

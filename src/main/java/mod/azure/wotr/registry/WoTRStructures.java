@@ -14,7 +14,7 @@ public class WoTRStructures {
 	public static StructureType<?> DRAGON_CAVE;
 
 	public static void registerStructureFeatures() {
-		DRAGON_CAVE = register(new ResourceLocation(WoTRMod.MODID, "dragon_cave"), DragonCaveStructure.CODEC);
+		DRAGON_CAVE = register(WoTRMod.modResource("dragon_cave"), DragonCaveStructure.CODEC);
 	}
 
 	private static <S extends Structure> StructureType<S> register(ResourceLocation id, Codec<S> codec) {

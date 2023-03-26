@@ -18,8 +18,7 @@ public class LungSerpentRender extends GeoEntityRenderer<LungSerpentEntity> {
 	}
 
 	@Override
-	public void render(LungSerpentEntity entity, float entityYaw, float partialTicks, PoseStack stack,
-			MultiBufferSource bufferIn, int packedLightIn) {
+	public void render(LungSerpentEntity entity, float entityYaw, float partialTicks, PoseStack stack, MultiBufferSource bufferIn, int packedLightIn) {
 		float scaleFactor = 0.8f + ((entity.getGrowth() / entity.getMaxGrowth()) / 4.0f);
 		stack.scale(scaleFactor, scaleFactor, scaleFactor);
 		super.render(entity, entityYaw, partialTicks, stack, bufferIn, packedLightIn);

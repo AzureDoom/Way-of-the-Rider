@@ -15,14 +15,12 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.sounds.SoundEvent;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.MobType;
 import net.minecraft.world.entity.ai.Brain;
@@ -31,7 +29,6 @@ import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.phys.Vec3;
 import net.tslat.smartbrainlib.api.SmartBrainOwner;
 import net.tslat.smartbrainlib.api.core.BrainActivityGroup;
 import net.tslat.smartbrainlib.api.core.SmartBrainProvider;
@@ -55,12 +52,9 @@ import net.tslat.smartbrainlib.api.core.sensor.vanilla.NearbyPlayersSensor;
 
 public abstract class WoTREntity extends AbstractHorse implements GeoEntity, SmartBrainOwner<WoTREntity> {
 
-	public static final EntityDataAccessor<Integer> STATE = SynchedEntityData.defineId(WoTREntity.class,
-			EntityDataSerializers.INT);
-	public static final EntityDataAccessor<Integer> VARIANT = SynchedEntityData.defineId(WoTREntity.class,
-			EntityDataSerializers.INT);
-	private static final EntityDataAccessor<Boolean> DATA_IS_CHARGING = SynchedEntityData.defineId(WoTREntity.class,
-			EntityDataSerializers.BOOLEAN);
+	public static final EntityDataAccessor<Integer> STATE = SynchedEntityData.defineId(WoTREntity.class, EntityDataSerializers.INT);
+	public static final EntityDataAccessor<Integer> VARIANT = SynchedEntityData.defineId(WoTREntity.class, EntityDataSerializers.INT);
+	private static final EntityDataAccessor<Boolean> DATA_IS_CHARGING = SynchedEntityData.defineId(WoTREntity.class, EntityDataSerializers.BOOLEAN);
 	private final AnimatableInstanceCache cache = AzureLibUtil.createInstanceCache(this);
 
 	public WoTREntity(EntityType<? extends AbstractHorse> entityType, Level Level) {
@@ -91,42 +85,27 @@ public abstract class WoTREntity extends AbstractHorse implements GeoEntity, Sma
 
 	@Override
 	public List<ExtendedSensor<WoTREntity>> getSensors() {
-		return ObjectArrayList.of(new NearbyPlayersSensor<>(),
-				new NearbyLivingEntitySensor<WoTREntity>().setPredicate((target, entity) -> target instanceof Monster),
-				new HurtBySensor<>(), new UnreachableTargetSensor<WoTREntity>());
+		return ObjectArrayList.of(new NearbyPlayersSensor<>(), new NearbyLivingEntitySensor<WoTREntity>().setPredicate((target, entity) -> target instanceof Monster), new HurtBySensor<>(), new UnreachableTargetSensor<WoTREntity>());
 	}
 
 	@Override
 	public BrainActivityGroup<WoTREntity> getCoreTasks() {
-		return BrainActivityGroup.coreTasks(new LookAtTarget<>(), new MoveToWalkTarget<>(),
-				new FloatToSurfaceOfFluid<>());
+		return BrainActivityGroup.coreTasks(new LookAtTarget<>(), new MoveToWalkTarget<>(), new FloatToSurfaceOfFluid<>());
 	}
 
 	@Override
 	public BrainActivityGroup<WoTREntity> getIdleTasks() {
-		return BrainActivityGroup
-				.idleTasks(
-						new FirstApplicableBehaviour<WoTREntity>(new TargetOrRetaliate<>(),
-								new SetPlayerLookTarget<>().stopIf(target -> !target.isAlive()
-										|| target instanceof Player && ((Player) target).isCreative()),
-								new SetRandomLookTarget<>()),
-						new OneRandomBehaviour<>(
-								new SetRandomWalkTarget<>().speedModifier(1)
-										.startCondition(entity -> !entity.isAggressive()),
-								new Idle<>().runFor(entity -> entity.getRandom().nextInt(30, 60))));
+		return BrainActivityGroup.idleTasks(new FirstApplicableBehaviour<WoTREntity>(new TargetOrRetaliate<>(), new SetPlayerLookTarget<>().stopIf(target -> !target.isAlive() || target instanceof Player && ((Player) target).isCreative()), new SetRandomLookTarget<>()), new OneRandomBehaviour<>(new SetRandomWalkTarget<>().speedModifier(1).startCondition(entity -> !entity.isAggressive()), new Idle<>().runFor(entity -> entity.getRandom().nextInt(30, 60))));
 	}
 
 	@Override
 	public BrainActivityGroup<WoTREntity> getFightTasks() {
-		return BrainActivityGroup.fightTasks(
-				new InvalidateAttackTarget<>().stopIf(
-						target -> !target.isAlive() || target instanceof Player && ((Player) target).isCreative()),
-				new SetWalkTargetToAttackTarget<>().speedMod(0.5F));
+		return BrainActivityGroup.fightTasks(new InvalidateAttackTarget<>().stopIf(target -> !target.isAlive() || target instanceof Player && ((Player) target).isCreative()), new SetWalkTargetToAttackTarget<>().speedMod(0.5F));
 	}
-	
-    @Override
-    protected void registerGoals() {
-    }
+
+	@Override
+	protected void registerGoals() {
+	}
 
 	public int getAttckingState() {
 		return this.entityData.get(STATE);
@@ -187,33 +166,29 @@ public abstract class WoTREntity extends AbstractHorse implements GeoEntity, Sma
 
 	@Override
 	public void playAmbientSound() {
-		SoundEvent soundEvent = this.getAmbientSound();
-		if (soundEvent != null) {
+		var soundEvent = this.getAmbientSound();
+		if (soundEvent != null)
 			this.playSound(soundEvent, 0.25F, this.getVoicePitch());
-		}
 	}
 
-	public static boolean canSpawn(EntityType<WoTREntity> type, LevelAccessor Level, MobSpawnType reason, BlockPos pos,
-			RandomSource random) {
+	public static boolean canSpawn(EntityType<WoTREntity> type, LevelAccessor Level, MobSpawnType reason, BlockPos pos, RandomSource random) {
 		if (Level.getDifficulty() == Difficulty.PEACEFUL)
 			return false;
 		if ((reason != MobSpawnType.CHUNK_GENERATION && reason != MobSpawnType.NATURAL))
-			return !Level.getBlockState(pos.below()).is(BlockTags.LOGS)
-					&& !Level.getBlockState(pos.below()).is(BlockTags.LEAVES);
-		return !Level.getBlockState(pos.below()).is(BlockTags.LOGS)
-				&& !Level.getBlockState(pos.below()).is(BlockTags.LEAVES);
+			return !Level.getBlockState(pos.below()).is(BlockTags.LOGS) && !Level.getBlockState(pos.below()).is(BlockTags.LEAVES);
+		return !Level.getBlockState(pos.below()).is(BlockTags.LOGS) && !Level.getBlockState(pos.below()).is(BlockTags.LEAVES);
 	}
 
 	public void shootFlames(Entity target) {
 		if (!this.level.isClientSide) {
 			if (this.getTarget() != null) {
-				LivingEntity livingentity = this.getTarget();
-				Level world = this.getCommandSenderWorld();
-				Vec3 vector3d = this.getViewVector(1.0F);
-				double d2 = livingentity.getX() - (this.getX() + vector3d.x * 2);
-				double d3 = livingentity.getY(0.5) - (this.getY(0.5));
-				double d4 = livingentity.getZ() - (this.getZ() + vector3d.z * 2);
-				DrakeFireProjectile projectile = new DrakeFireProjectile(level, this, d2, d3, d4);
+				var livingentity = this.getTarget();
+				var world = this.getCommandSenderWorld();
+				var vector3d = this.getViewVector(1.0F);
+				var x = livingentity.getX() - (this.getX() + vector3d.x * 2);
+				var y = livingentity.getY(0.5) - (this.getY(0.5));
+				var z = livingentity.getZ() - (this.getZ() + vector3d.z * 2);
+				var projectile = new DrakeFireProjectile(level, this, x, y, z);
 				projectile.setPos(this.getX() + vector3d.x * 2, this.getY(0.5), this.getZ() + vector3d.z * 2);
 				world.addFreshEntity(projectile);
 			}
@@ -222,9 +197,7 @@ public abstract class WoTREntity extends AbstractHorse implements GeoEntity, Sma
 
 	@Override
 	public boolean hurt(DamageSource source, float amount) {
-		return source == DamageSource.IN_WALL || source == DamageSource.ON_FIRE || source == DamageSource.IN_FIRE
-				? false
-				: super.hurt(source, amount);
+		return source == damageSources().inWall() || source == damageSources().inFire() || source == damageSources().onFire() ? false : super.hurt(source, amount);
 	}
 
 	@Override

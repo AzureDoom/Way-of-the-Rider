@@ -23,8 +23,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 
 public class WoTRClientMod implements ClientModInitializer {
 
-	public static KeyMapping reload = new KeyMapping("key." + WoTRMod.MODID + ".reload", InputConstants.Type.KEYSYM,
-			GLFW.GLFW_KEY_R, "category." + WoTRMod.MODID + ".binds");
+	public static KeyMapping reload = new KeyMapping("key." + WoTRMod.MODID + ".reload", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_R, "category." + WoTRMod.MODID + ".binds");
 
 	@Override
 	public void onInitializeClient() {
@@ -33,10 +32,8 @@ public class WoTRClientMod implements ClientModInitializer {
 		EntityRendererRegistry.register(WoTREntities.LUNG_SERPENT, (ctx) -> new LungSerpentRender(ctx));
 		EntityRendererRegistry.register(WoTREntities.DRAKE_FIRE, (ctx) -> new DrakeFireProjectiletRender(ctx));
 		BlockRenderLayerMap.INSTANCE.putBlock(WoTRBlocks.DRAKE_SKULL, RenderType.translucent());
-		BlockEntityRendererRegistry.register(WoTREntities.DRAKE_SKULL,
-				(BlockEntityRendererProvider.Context rendererDispatcherIn) -> new DrakeSkullBlockRender());
-		EntityRendererRegistry.register(WoTREntities.DRAKE_GAUNTLET_FIRE,
-				(ctx) -> new DrakeGauntletFireProjectileRender(ctx));
+		BlockEntityRendererRegistry.register(WoTREntities.DRAKE_SKULL, (BlockEntityRendererProvider.Context rendererDispatcherIn) -> new DrakeSkullBlockRender());
+		EntityRendererRegistry.register(WoTREntities.DRAKE_GAUNTLET_FIRE, (ctx) -> new DrakeGauntletFireProjectileRender(ctx));
 	}
 
 }

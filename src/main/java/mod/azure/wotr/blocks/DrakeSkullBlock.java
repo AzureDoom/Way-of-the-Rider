@@ -27,8 +27,7 @@ public class DrakeSkullBlock extends BaseEntityBlock {
 	protected Random RANDOM = new Random();
 
 	public DrakeSkullBlock() {
-		super(FabricBlockSettings.of(Material.METAL).sounds(SoundType.METAL).nonOpaque().requiresTool()
-				.strength(3, 3).luminance(15));
+		super(FabricBlockSettings.of(Material.METAL).sounds(SoundType.METAL).nonOpaque().requiresTool().strength(3, 3).luminance(15));
 	}
 
 	@Override

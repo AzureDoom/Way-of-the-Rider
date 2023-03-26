@@ -18,12 +18,11 @@ public class DrakeFireProjectiletRender extends EntityRenderer<DrakeFireProjecti
 
 	@Override
 	public ResourceLocation getTextureLocation(DrakeFireProjectile entity) {
-		return new ResourceLocation(WoTRMod.MODID, "textures/item/empty.png");
+		return WoTRMod.modResource("textures/item/empty.png");
 	}
 
 	@Override
-	public void render(DrakeFireProjectile persistentProjectileEntity, float f, float g, PoseStack matrixStack,
-			MultiBufferSource vertexConsumerProvider, int i) {
+	public void render(DrakeFireProjectile persistentProjectileEntity, float f, float g, PoseStack matrixStack, MultiBufferSource vertexConsumerProvider, int i) {
 		super.render(persistentProjectileEntity, f, g, matrixStack, vertexConsumerProvider, i);
 		matrixStack.pushPose();
 		matrixStack.scale(0, 0, 0);

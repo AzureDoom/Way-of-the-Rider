@@ -18,10 +18,9 @@ public class DrakeRender extends GeoEntityRenderer<DrakeEntity> {
 		this.addRenderLayer(new DrakeSaddleLayer(this));
 		this.shadowRadius = 0.7F;
 	}
-	
+
 	@Override
-	public void render(DrakeEntity entity, float entityYaw, float partialTicks, PoseStack stack,
-			MultiBufferSource bufferIn, int packedLightIn) {
+	public void render(DrakeEntity entity, float entityYaw, float partialTicks, PoseStack stack, MultiBufferSource bufferIn, int packedLightIn) {
 		float scaleFactor = 0.8f + ((entity.getGrowth() / entity.getMaxGrowth()) / 4.0f);
 		stack.scale(scaleFactor, scaleFactor, scaleFactor);
 		super.render(entity, entityYaw, partialTicks, stack, bufferIn, packedLightIn);

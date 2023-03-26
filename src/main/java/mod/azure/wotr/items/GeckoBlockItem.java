@@ -34,14 +34,16 @@ public class GeckoBlockItem extends BlockItem implements GeoItem {
 	public AnimatableInstanceCache getAnimatableInstanceCache() {
 		return this.cache;
 	}
-	
+
 	@Override
 	public void createRenderer(Consumer<Object> consumer) {
 		consumer.accept(new RenderProvider() {
-			private final DrakeSkullItemRender renderer = new DrakeSkullItemRender();
+			private final DrakeSkullItemRender renderer = null;
 
 			@Override
 			public BlockEntityWithoutLevelRenderer getCustomRenderer() {
+				if (renderer == null)
+					return new DrakeSkullItemRender();
 				return this.renderer;
 			}
 		});

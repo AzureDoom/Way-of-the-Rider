@@ -14,7 +14,7 @@ public class WoTRConfig extends MidnightConfig {
 	public static float drake_ranged = 15;
 	@Entry
 	public static int drake_exp = 30;
-	
+
 	@Entry
 	public static double lung_serpent_health = 80;
 	@Entry

@@ -11,7 +11,6 @@ import mod.azure.wotr.entity.DrakeEntity;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 
 public class DrakeArmorLayer extends GeoRenderLayer<DrakeEntity> {
@@ -21,18 +20,9 @@ public class DrakeArmorLayer extends GeoRenderLayer<DrakeEntity> {
 	}
 
 	@Override
-	public void render(PoseStack poseStack, DrakeEntity animatable, BakedGeoModel bakedModel, RenderType renderType,
-			MultiBufferSource bufferSource, VertexConsumer buffer, float partialTick, int packedLight,
-			int packedOverlay) {
-        RenderType armorRenderType = RenderType.armorCutoutNoCull(new ResourceLocation(WoTRMod.MODID,
-				"textures/entity/layer/drake_armor_"
-						+ (animatable.getAttribute(Attributes.ARMOR).getValue() == 5 ? "iron"
-								: animatable.getAttribute(Attributes.ARMOR).getValue() == 7 ? "gold"
-										: "diamond")
-						+ ".png"));
+	public void render(PoseStack poseStack, DrakeEntity animatable, BakedGeoModel bakedModel, RenderType renderType, MultiBufferSource bufferSource, VertexConsumer buffer, float partialTick, int packedLight, int packedOverlay) {
+		var armorRenderType = RenderType.armorCutoutNoCull(WoTRMod.modResource("textures/entity/layer/drake_armor_" + (animatable.getAttribute(Attributes.ARMOR).getValue() == 5 ? "iron" : animatable.getAttribute(Attributes.ARMOR).getValue() == 7 ? "gold" : "diamond") + ".png"));
 		if (animatable.isWearingArmor())
-	        getRenderer().reRender(getDefaultBakedModel(animatable), poseStack, bufferSource, animatable, armorRenderType,
-	                bufferSource.getBuffer(armorRenderType), partialTick, packedLight, OverlayTexture.NO_OVERLAY,
-	                1, 1, 1, 1);
+			getRenderer().reRender(getDefaultBakedModel(animatable), poseStack, bufferSource, animatable, armorRenderType, bufferSource.getBuffer(armorRenderType), partialTick, packedLight, OverlayTexture.NO_OVERLAY, 1, 1, 1, 1);
 	}
 }

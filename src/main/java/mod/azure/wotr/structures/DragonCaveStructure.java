@@ -17,15 +17,9 @@ import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
 
 public class DragonCaveStructure extends Structure {
 
-	public static final Codec<DragonCaveStructure> CODEC = RecordCodecBuilder
-			.<DragonCaveStructure>mapCodec(instance -> instance.group(DragonCaveStructure.settingsCodec(instance),
-					StructureTemplatePool.CODEC.fieldOf("start_pool").forGetter(structure -> structure.startPool),
-					ResourceLocation.CODEC.optionalFieldOf("start_jigsaw_name")
-							.forGetter(structure -> structure.startJigsawName),
-					Codec.intRange(0, 2).fieldOf("size").forGetter(structure -> structure.size),
-					Codec.intRange(1, 128).fieldOf("max_distance_from_center")
-							.forGetter(structure -> structure.maxDistanceFromCenter))
-					.apply(instance, DragonCaveStructure::new))
+	public static final Codec<DragonCaveStructure> CODEC = RecordCodecBuilder.<DragonCaveStructure>mapCodec(
+			instance -> instance.group(DragonCaveStructure.settingsCodec(instance), StructureTemplatePool.CODEC.fieldOf("start_pool").forGetter(structure -> structure.startPool), ResourceLocation.CODEC.optionalFieldOf("start_jigsaw_name").forGetter(structure -> structure.startJigsawName), Codec.intRange(0, 2).fieldOf("size").forGetter(structure -> structure.size), Codec.intRange(1, 128).fieldOf("max_distance_from_center").forGetter(structure -> structure.maxDistanceFromCenter)).apply(instance,
+					DragonCaveStructure::new))
 			.codec();
 
 	private final Holder<StructureTemplatePool> startPool;
@@ -33,8 +27,7 @@ public class DragonCaveStructure extends Structure {
 	private final int size;
 	private final int maxDistanceFromCenter;
 
-	public DragonCaveStructure(Structure.StructureSettings config, Holder<StructureTemplatePool> startPool,
-			Optional<ResourceLocation> startJigsawName, int size, int maxDistanceFromCenter) {
+	public DragonCaveStructure(Structure.StructureSettings config, Holder<StructureTemplatePool> startPool, Optional<ResourceLocation> startJigsawName, int size, int maxDistanceFromCenter) {
 		super(config);
 		this.startPool = startPool;
 		this.startJigsawName = startJigsawName;
@@ -48,9 +41,7 @@ public class DragonCaveStructure extends Structure {
 		int var = random.nextInt(-28, 28);
 		BlockPos blockpos = new BlockPos(context.chunkPos().getMinBlockX(), var, context.chunkPos().getMinBlockZ());
 
-		Optional<GenerationStub> structurePiecesGenerator = JigsawPlacement.addPieces(context,
-				this.startPool, this.startJigsawName, this.size, blockpos, false, Optional.empty(),
-				this.maxDistanceFromCenter);
+		Optional<GenerationStub> structurePiecesGenerator = JigsawPlacement.addPieces(context, this.startPool, this.startJigsawName, this.size, blockpos, false, Optional.empty(), this.maxDistanceFromCenter);
 		return structurePiecesGenerator;
 	}
 

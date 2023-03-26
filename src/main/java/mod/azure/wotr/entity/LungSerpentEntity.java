@@ -1,6 +1,5 @@
 package mod.azure.wotr.entity;
 
-import java.util.SplittableRandom;
 import java.util.function.Predicate;
 
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +30,6 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
@@ -41,8 +39,7 @@ import net.minecraft.world.phys.Vec3;
 
 public class LungSerpentEntity extends WoTREntity implements Growable {
 
-	public static final EntityDataAccessor<Float> GROWTH = SynchedEntityData.defineId(LungSerpentEntity.class,
-			EntityDataSerializers.FLOAT);
+	public static final EntityDataAccessor<Float> GROWTH = SynchedEntityData.defineId(LungSerpentEntity.class, EntityDataSerializers.FLOAT);
 
 	public LungSerpentEntity(EntityType<? extends AbstractHorse> entityType, Level world) {
 		super(entityType, world);
@@ -50,10 +47,7 @@ public class LungSerpentEntity extends WoTREntity implements Growable {
 	}
 
 	public static AttributeSupplier.Builder createMobAttributes() {
-		return LivingEntity.createLivingAttributes().add(Attributes.FOLLOW_RANGE, 25.0D)
-				.add(Attributes.MAX_HEALTH, WoTRConfig.lung_serpent_health).add(Attributes.ATTACK_DAMAGE, 0)
-				.add(Attributes.JUMP_STRENGTH, 0).add(Attributes.MOVEMENT_SPEED, 0.25D)
-				.add(Attributes.ATTACK_KNOCKBACK, 0.0D);
+		return LivingEntity.createLivingAttributes().add(Attributes.FOLLOW_RANGE, 25.0D).add(Attributes.MAX_HEALTH, WoTRConfig.lung_serpent_health).add(Attributes.ATTACK_DAMAGE, 0).add(Attributes.JUMP_STRENGTH, 0).add(Attributes.MOVEMENT_SPEED, 0.25D).add(Attributes.ATTACK_KNOCKBACK, 0.0D);
 	}
 
 	@Override
@@ -120,9 +114,8 @@ public class LungSerpentEntity extends WoTREntity implements Growable {
 	public void aiStep() {
 		super.aiStep();
 
-		if (!level.isClientSide() && this.isAlive()) {
+		if (!level.isClientSide() && this.isAlive())
 			grow(this, (this.tickCount / 24000) * 1);
-		}
 	}
 
 	@Override
@@ -131,16 +124,14 @@ public class LungSerpentEntity extends WoTREntity implements Growable {
 	}
 
 	@Override
-	public SpawnGroupData finalizeSpawn(ServerLevelAccessor serverWorldAccess, DifficultyInstance difficulty,
-			MobSpawnType reason, @Nullable SpawnGroupData spawnData, @Nullable CompoundTag entityTag) {
+	public SpawnGroupData finalizeSpawn(ServerLevelAccessor serverWorldAccess, DifficultyInstance difficulty, MobSpawnType reason, @Nullable SpawnGroupData spawnData, @Nullable CompoundTag entityTag) {
 		spawnData = super.finalizeSpawn(serverWorldAccess, difficulty, reason, spawnData, entityTag);
-		SplittableRandom random = new SplittableRandom();
-		int var = random.nextInt(0, 4);
+		var var = this.getRandom().nextInt(0, 4);
 		this.setVariant(var);
 		if ((reason == MobSpawnType.CHUNK_GENERATION || reason == MobSpawnType.NATURAL)) {
 			this.setTamed(false);
 		} else {
-			LivingEntity player = this.getCommandSenderWorld().getNearestPlayer(this, 15);
+			var player = this.getCommandSenderWorld().getNearestPlayer(this, 15);
 			if (player != null)
 				this.tameWithName((Player) player);
 			setGrowth(1200);
@@ -167,24 +158,21 @@ public class LungSerpentEntity extends WoTREntity implements Growable {
 
 	@Override
 	public InteractionResult mobInteract(Player player, InteractionHand hand) {
-		ItemStack itemStack = player.getItemInHand(hand);
-		Item item = itemStack.getItem();
+		var itemStack = player.getItemInHand(hand);
+		var item = itemStack.getItem();
 		if (!this.isBaby()) {
 			if (player.isSecondaryUseActive()) {
 				this.openCustomInventoryScreen(player);
 				return InteractionResult.sidedSuccess(this.level.isClientSide);
 			}
-			if (this.isVehicle()) {
+			if (this.isVehicle())
 				return super.mobInteract(player, hand);
-			}
 		}
 		if (!itemStack.isEmpty()) {
-			InteractionResult actionResult = itemStack.interactLivingEntity(player, this, hand);
-			if (actionResult.consumesAction()) {
+			var actionResult = itemStack.interactLivingEntity(player, this, hand);
+			if (actionResult.consumesAction())
 				return actionResult;
-			}
-			boolean bl = !this.isBaby() && !this.isSaddled() && itemStack.is(Items.SADDLE)
-					&& this.getGrowth() >= this.getMaxGrowth();
+			var bl = !this.isBaby() && !this.isSaddled() && itemStack.is(Items.SADDLE) && this.getGrowth() >= this.getMaxGrowth();
 			if (bl) {
 				this.openCustomInventoryScreen(player);
 				return InteractionResult.sidedSuccess(this.level.isClientSide);
@@ -192,46 +180,41 @@ public class LungSerpentEntity extends WoTREntity implements Growable {
 			if (this.isFood(itemStack) && this.getHealth() < this.getMaxHealth())
 				this.heal(item.getFoodProperties().getNutrition());
 		}
-		if (this.getGrowth() < this.getMaxGrowth()) {
+		if (this.getGrowth() < this.getMaxGrowth())
 			return super.mobInteract(player, hand);
-		}
-		if (this.isBaby()) {
+		if (this.isBaby())
 			return super.mobInteract(player, hand);
-		}
 		if (this.isSaddled())
 			this.doPlayerRide(player);
 		return InteractionResult.sidedSuccess(this.level.isClientSide);
 	}
 
 	@Override
-	protected void executeRidersJump(float f, float g, float h) {
+	protected void executeRidersJump(float f, Vec3 vec3) {
+		super.executeRidersJump(f, vec3);
 	}
 
 	@Override
 	public boolean isFood(ItemStack stack) {
-		Item item = stack.getItem();
+		var item = stack.getItem();
 		return item.isEdible() && item.getFoodProperties().isMeat();
 	}
 
 	@Override
 	public SlotAccess getSlot(int mappedIndex) {
 		int j;
-		int i = mappedIndex - 400;
+		var i = mappedIndex - 400;
 		if (i >= 0 && i < 2 && i < this.inventory.getContainerSize()) {
-			if (i == 0) {
-				return this.createEquipmentSlotAccess(i, stack -> (stack.isEmpty()
-						|| stack.is(Items.SADDLE) && this.getGrowth() >= this.getMaxGrowth()));
-			}
+			if (i == 0)
+				return this.createEquipmentSlotAccess(i, stack -> (stack.isEmpty() || stack.is(Items.SADDLE) && this.getGrowth() >= this.getMaxGrowth()));
 			if (i == 1) {
-				if (!this.canWearArmor()) {
+				if (!this.canWearArmor())
 					return SlotAccess.NULL;
-				}
 				return this.createEquipmentSlotAccess(i, stack -> stack.isEmpty() || this.isArmor((ItemStack) stack));
 			}
 		}
-		if ((j = mappedIndex - 500 + 2) >= 2 && j < this.inventory.getContainerSize()) {
+		if ((j = mappedIndex - 500 + 2) >= 2 && j < this.inventory.getContainerSize())
 			return SlotAccess.forContainer(this.inventory, j);
-		}
 		return super.getSlot(mappedIndex);
 	}
 
@@ -245,9 +228,8 @@ public class LungSerpentEntity extends WoTREntity implements Growable {
 
 			@Override
 			public boolean set(ItemStack stack) {
-				if (!predicate.test(stack)) {
+				if (!predicate.test(stack))
 					return false;
-				}
 				LungSerpentEntity.this.inventory.setItem(slot, stack);
 				LungSerpentEntity.this.updateContainerEquipment();
 				return true;
@@ -257,12 +239,10 @@ public class LungSerpentEntity extends WoTREntity implements Growable {
 
 	@Override
 	public void travel(Vec3 movementInput) {
-		if (!this.isAlive()) {
+		if (!this.isAlive())
 			return;
-		}
-		LivingEntity livingEntity = this.getControllingPassenger();
+		var livingEntity = this.getControllingPassenger();
 		if (!this.isVehicle() || livingEntity == null) {
-			this.flyingSpeed = 0.02f;
 			super.travel(movementInput);
 			return;
 		}
@@ -271,37 +251,33 @@ public class LungSerpentEntity extends WoTREntity implements Growable {
 		this.setXRot(livingEntity.getXRot() * 0.5f);
 		this.setRot(this.getYRot(), this.getXRot());
 		this.yHeadRot = this.yBodyRot = this.getYRot();
-		float f = livingEntity.xxa * 0.5f;
-		float g = livingEntity.zza;
+		var f = livingEntity.xxa * 0.5f;
+		var g = livingEntity.zza;
 		if (g <= 0.0f) {
 			g *= 0.25f;
 			this.gallopSoundCounter = 0;
 		}
 		if (this.playerJumpPendingScale > 0.0f && !this.isJumping() && this.onGround) {
-			double d = this.getCustomJump() * (double) this.playerJumpPendingScale * (double) this.getBlockJumpFactor();
-			double e = d + this.getJumpBoostPower();
-			Vec3 vec3d = this.getDeltaMovement();
+			var d = this.getCustomJump() * (double) this.playerJumpPendingScale * (double) this.getBlockJumpFactor();
+			var e = d + this.getJumpBoostPower();
+			var vec3d = this.getDeltaMovement();
 			this.setDeltaMovement(vec3d.x, e * this.playerJumpPendingScale, vec3d.z);
 			this.setIsJumping(true);
 			this.hasImpulse = true;
 			if (g > 0.0f) {
 				float h = Mth.sin(this.getYRot() * ((float) Math.PI / 180));
 				float i = Mth.cos(this.getYRot() * ((float) Math.PI / 180));
-				this.setDeltaMovement(this.getDeltaMovement().add(-3.8f * h * this.playerJumpPendingScale,
-						1.0 * this.playerJumpPendingScale, 3.8f * i * this.playerJumpPendingScale));
+				this.setDeltaMovement(this.getDeltaMovement().add(-3.8f * h * this.playerJumpPendingScale, 1.0 * this.playerJumpPendingScale, 3.8f * i * this.playerJumpPendingScale));
 			}
 			this.playerJumpPendingScale = 0.0f;
 		}
-		this.flyingSpeed = this.getSpeed() * 0.1f;
 		if (this.isControlledByLocalInstance()) {
 			this.setSpeed((float) this.getAttributeValue(Attributes.MOVEMENT_SPEED));
 			super.travel(new Vec3(f, movementInput.y, g));
-		} else if (livingEntity instanceof Player) {
+		} else if (livingEntity instanceof Player)
 			this.setDeltaMovement(Vec3.ZERO);
-		}
 		this.playerJumpPendingScale = 0.0f;
 		this.setIsJumping(false);
-		this.calculateEntityAnimation(this, false);
 		this.tryCheckInsideBlocks();
 	}
 
@@ -319,9 +295,8 @@ public class LungSerpentEntity extends WoTREntity implements Growable {
 
 	@Override
 	public void openCustomInventoryScreen(Player player) {
-		if (!this.level.isClientSide() && (!this.isVehicle() || this.hasPassenger(player))) {
+		if (!this.level.isClientSide() && (!this.isVehicle() || this.hasPassenger(player)))
 			player.openHorseInventory(this, this.inventory);
-		}
 	}
 
 	protected int getInventorySize() {
@@ -329,12 +304,12 @@ public class LungSerpentEntity extends WoTREntity implements Growable {
 	}
 
 	protected void onChestedStatusChanged() {
-		SimpleContainer simpleInventory = this.inventory;
+		var simpleInventory = this.inventory;
 		this.inventory = new SimpleContainer(this.getInventorySize());
 		if (simpleInventory != null) {
 			simpleInventory.removeListener(this);
-			int i = Math.min(simpleInventory.getContainerSize(), this.inventory.getContainerSize());
-			for (int j = 0; j < i; ++j) {
+			var i = Math.min(simpleInventory.getContainerSize(), this.inventory.getContainerSize());
+			for (var j = 0; j < i; ++j) {
 				ItemStack itemStack = simpleInventory.getItem(j);
 				if (itemStack.isEmpty())
 					continue;
