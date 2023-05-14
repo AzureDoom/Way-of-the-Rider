@@ -1,8 +1,8 @@
 package mod.azure.wotr;
 
-import dev.toma.configuration.Configuration;
-import dev.toma.configuration.config.format.ConfigFormats;
 import mod.azure.azurelib.AzureLib;
+import mod.azure.azurelib.AzureLibMod;
+import mod.azure.azurelib.config.format.ConfigFormats;
 import mod.azure.wotr.config.WoTRConfig;
 import mod.azure.wotr.entity.DrakeEntity;
 import mod.azure.wotr.entity.LungSerpentEntity;
@@ -46,7 +46,7 @@ public class WoTRMod implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
-		config = Configuration.registerConfig(WoTRConfig.class, ConfigFormats.json()).getConfigInstance();
+		config = AzureLibMod.registerConfig(WoTRConfig.class, ConfigFormats.json()).getConfigInstance();
 		ITEMS = new WoTRItems();
 		BLOCKS = new WoTRBlocks();
 		SOUNDS = new WoTRSounds();

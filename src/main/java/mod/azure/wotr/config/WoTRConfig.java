@@ -1,7 +1,7 @@
 package mod.azure.wotr.config;
 
-import dev.toma.configuration.config.Config;
-import dev.toma.configuration.config.Configurable;
+import mod.azure.azurelib.config.Config;
+import mod.azure.azurelib.config.Configurable;
 import mod.azure.wotr.WoTRMod;
 
 @Config(id = WoTRMod.MODID)
