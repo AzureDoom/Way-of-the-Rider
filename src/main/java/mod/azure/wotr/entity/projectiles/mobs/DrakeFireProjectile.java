@@ -3,7 +3,7 @@ package mod.azure.wotr.entity.projectiles.mobs;
 import mod.azure.azurelib.AzureLibMod;
 import mod.azure.azurelib.entities.TickingLightEntity;
 import mod.azure.azurelib.network.packet.EntityPacket;
-import mod.azure.wotr.config.WoTRConfig;
+import mod.azure.wotr.WoTRMod;
 import mod.azure.wotr.entity.DrakeEntity;
 import mod.azure.wotr.registry.WoTREntities;
 import net.fabricmc.api.EnvType;
@@ -147,7 +147,7 @@ public class DrakeFireProjectile extends AbstractHurtingProjectile {
 			return;
 		var entity = entityHitResult.getEntity();
 		if (!(entity instanceof DrakeEntity))
-			entity.hurt(damageSources().indirectMagic(this, entity), WoTRConfig.drake_ranged);
+			entity.hurt(damageSources().indirectMagic(this, entity), WoTRMod.config.drake_ranged);
 		this.remove(Entity.RemovalReason.DISCARDED);
 		entity.setSecondsOnFire(15);
 	}

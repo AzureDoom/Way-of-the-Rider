@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import mod.azure.azurelib.core.animation.AnimatableManager.ControllerRegistrar;
 import mod.azure.azurelib.core.animation.AnimationController;
 import mod.azure.azurelib.core.animation.RawAnimation;
-import mod.azure.wotr.config.WoTRConfig;
+import mod.azure.wotr.WoTRMod;
 import mod.azure.wotr.registry.WoTRSounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -43,11 +43,11 @@ public class LungSerpentEntity extends WoTREntity implements Growable {
 
 	public LungSerpentEntity(EntityType<? extends AbstractHorse> entityType, Level world) {
 		super(entityType, world);
-		this.xpReward = WoTRConfig.lung_serpent_exp;
+		this.xpReward = WoTRMod.config.lung_serpent_exp;
 	}
 
 	public static AttributeSupplier.Builder createMobAttributes() {
-		return LivingEntity.createLivingAttributes().add(Attributes.FOLLOW_RANGE, 25.0D).add(Attributes.MAX_HEALTH, WoTRConfig.lung_serpent_health).add(Attributes.ATTACK_DAMAGE, 0).add(Attributes.JUMP_STRENGTH, 0).add(Attributes.MOVEMENT_SPEED, 0.25D).add(Attributes.ATTACK_KNOCKBACK, 0.0D);
+		return LivingEntity.createLivingAttributes().add(Attributes.FOLLOW_RANGE, 25.0D).add(Attributes.MAX_HEALTH, WoTRMod.config.lung_serpent_health).add(Attributes.ATTACK_DAMAGE, 0).add(Attributes.JUMP_STRENGTH, 0).add(Attributes.MOVEMENT_SPEED, 0.25D).add(Attributes.ATTACK_KNOCKBACK, 0.0D);
 	}
 
 	@Override

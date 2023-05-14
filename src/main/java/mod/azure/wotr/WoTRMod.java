@@ -1,6 +1,7 @@
 package mod.azure.wotr;
 
-import eu.midnightdust.lib.config.MidnightConfig;
+import dev.toma.configuration.Configuration;
+import dev.toma.configuration.config.format.ConfigFormats;
 import mod.azure.azurelib.AzureLib;
 import mod.azure.wotr.config.WoTRConfig;
 import mod.azure.wotr.entity.DrakeEntity;
@@ -22,6 +23,7 @@ import net.minecraft.world.item.ItemStack;
 
 public class WoTRMod implements ModInitializer {
 
+	public static WoTRConfig config;
 	public static WoTRSounds SOUNDS;
 	public static WoTRItems ITEMS;
 	public static WoTRBlocks BLOCKS;
@@ -44,7 +46,7 @@ public class WoTRMod implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
-		MidnightConfig.init(MODID, WoTRConfig.class);
+		config = Configuration.registerConfig(WoTRConfig.class, ConfigFormats.json()).getConfigInstance();
 		ITEMS = new WoTRItems();
 		BLOCKS = new WoTRBlocks();
 		SOUNDS = new WoTRSounds();

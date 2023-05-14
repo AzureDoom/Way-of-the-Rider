@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import mod.azure.azurelib.core.animation.AnimatableManager.ControllerRegistrar;
 import mod.azure.azurelib.core.animation.AnimationController;
 import mod.azure.azurelib.core.animation.RawAnimation;
-import mod.azure.wotr.config.WoTRConfig;
+import mod.azure.wotr.WoTRMod;
 import mod.azure.wotr.entity.tasks.FireProjectileAttack;
 import mod.azure.wotr.items.DrakeArmorItem;
 import mod.azure.wotr.registry.WoTRSounds;
@@ -57,11 +57,11 @@ public class DrakeEntity extends WoTREntity implements Growable {
 
 	public DrakeEntity(EntityType<? extends AbstractHorse> entityType, Level world) {
 		super(entityType, world);
-		this.xpReward = WoTRConfig.drake_exp;
+		this.xpReward = WoTRMod.config.drake_exp;
 	}
 
 	public static AttributeSupplier.Builder createMobAttributes() {
-		return LivingEntity.createLivingAttributes().add(Attributes.FOLLOW_RANGE, 25.0D).add(Attributes.MAX_HEALTH, WoTRConfig.drake_health).add(Attributes.ATTACK_DAMAGE, WoTRConfig.drake_melee).add(Attributes.JUMP_STRENGTH, 3).add(Attributes.MOVEMENT_SPEED, 0.25D).add(Attributes.ATTACK_KNOCKBACK, 0.0D);
+		return LivingEntity.createLivingAttributes().add(Attributes.FOLLOW_RANGE, 25.0D).add(Attributes.MAX_HEALTH, WoTRMod.config.drake_health).add(Attributes.ATTACK_DAMAGE, WoTRMod.config.drake_melee).add(Attributes.JUMP_STRENGTH, 3).add(Attributes.MOVEMENT_SPEED, 0.25D).add(Attributes.ATTACK_KNOCKBACK, 0.0D);
 	}
 
 	@Override
