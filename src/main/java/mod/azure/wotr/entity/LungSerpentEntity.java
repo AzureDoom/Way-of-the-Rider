@@ -70,11 +70,10 @@ public class LungSerpentEntity extends WoTREntity implements Growable {
 
 	@Override
 	protected void playStepSound(BlockPos pos, BlockState state) {
-		return;
-	}
+    }
 
 	public int getVariant() {
-		return Mth.clamp((Integer) this.entityData.get(VARIANT), 1, 4);
+		return Mth.clamp(this.entityData.get(VARIANT), 1, 4);
 	}
 
 	public int getVariants() {
@@ -114,7 +113,7 @@ public class LungSerpentEntity extends WoTREntity implements Growable {
 	public void aiStep() {
 		super.aiStep();
 
-		if (!level.isClientSide() && this.isAlive())
+		if (!level().isClientSide() && this.isAlive())
 			grow(this, (this.tickCount / 24000) * 1);
 	}
 
@@ -163,7 +162,7 @@ public class LungSerpentEntity extends WoTREntity implements Growable {
 		if (!this.isBaby()) {
 			if (player.isSecondaryUseActive()) {
 				this.openCustomInventoryScreen(player);
-				return InteractionResult.sidedSuccess(this.level.isClientSide);
+				return InteractionResult.sidedSuccess(this.level().isClientSide);
 			}
 			if (this.isVehicle())
 				return super.mobInteract(player, hand);
@@ -175,7 +174,7 @@ public class LungSerpentEntity extends WoTREntity implements Growable {
 			var bl = !this.isBaby() && !this.isSaddled() && itemStack.is(Items.SADDLE) && this.getGrowth() >= this.getMaxGrowth();
 			if (bl) {
 				this.openCustomInventoryScreen(player);
-				return InteractionResult.sidedSuccess(this.level.isClientSide);
+				return InteractionResult.sidedSuccess(this.level().isClientSide);
 			}
 			if (this.isFood(itemStack) && this.getHealth() < this.getMaxHealth())
 				this.heal(item.getFoodProperties().getNutrition());
@@ -186,7 +185,7 @@ public class LungSerpentEntity extends WoTREntity implements Growable {
 			return super.mobInteract(player, hand);
 		if (this.isSaddled())
 			this.doPlayerRide(player);
-		return InteractionResult.sidedSuccess(this.level.isClientSide);
+		return InteractionResult.sidedSuccess(this.level().isClientSide);
 	}
 
 	@Override
@@ -257,7 +256,7 @@ public class LungSerpentEntity extends WoTREntity implements Growable {
 			g *= 0.25f;
 			this.gallopSoundCounter = 0;
 		}
-		if (this.playerJumpPendingScale > 0.0f && !this.isJumping() && this.onGround) {
+		if (this.playerJumpPendingScale > 0.0f && !this.isJumping() && this.onGround()) {
 			var d = this.getCustomJump() * (double) this.playerJumpPendingScale * (double) this.getBlockJumpFactor();
 			var e = d + this.getJumpBoostPower();
 			var vec3d = this.getDeltaMovement();
@@ -295,7 +294,7 @@ public class LungSerpentEntity extends WoTREntity implements Growable {
 
 	@Override
 	public void openCustomInventoryScreen(Player player) {
-		if (!this.level.isClientSide() && (!this.isVehicle() || this.hasPassenger(player)))
+		if (!this.level().isClientSide() && (!this.isVehicle() || this.hasPassenger(player)))
 			player.openHorseInventory(this, this.inventory);
 	}
 

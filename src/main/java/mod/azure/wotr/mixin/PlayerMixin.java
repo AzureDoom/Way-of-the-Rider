@@ -9,6 +9,6 @@ import net.minecraft.world.entity.player.Player;
 @Mixin(Player.class)
 public abstract class PlayerMixin {
 
-	public static void openDrakeInventory(DrakeEntity horse, Inventory inventory) {
+	private static void openDrakeInventory(DrakeEntity horse, Inventory inventory) {
 	}
 }

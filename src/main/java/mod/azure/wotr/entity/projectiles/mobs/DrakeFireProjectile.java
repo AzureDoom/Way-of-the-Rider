@@ -78,22 +78,22 @@ public class DrakeFireProjectile extends AbstractHurtingProjectile {
 		super.tick();
 		if (this.ticksInAir >= 80)
 			this.remove(Entity.RemovalReason.DISCARDED);
-		var isInsideWaterBlock = level.isWaterAt(blockPosition());
+		var isInsideWaterBlock = level().isWaterAt(blockPosition());
 		spawnLightSource(isInsideWaterBlock);
-		if (this.level.isClientSide() && this.tickCount > 5) {
-			this.level.addParticle(ParticleTypes.FLAME, true, this.getX() + (this.random.nextDouble() * 2.0D - 1.0D) * (double) this.getBbWidth() * 0.5D, this.getY() + 0.05D + this.random.nextDouble(), this.getZ() + (this.random.nextDouble() * 2.0D - 1.0D) * (double) this.getBbWidth() * 0.5D, 0, 0, 0);
-			this.level.addParticle(ParticleTypes.SMOKE, true, this.getX() + (this.random.nextDouble() * 2.0D - 1.0D) * (double) this.getBbWidth() * 0.5D, this.getY() + 0.05D + this.random.nextDouble(), this.getZ() + (this.random.nextDouble() * 2.0D - 1.0D) * (double) this.getBbWidth() * 0.5D, 0, 0, 0);
+		if (this.level().isClientSide() && this.tickCount > 5) {
+			this.level().addParticle(ParticleTypes.FLAME, true, this.getX() + (this.random.nextDouble() * 2.0D - 1.0D) * (double) this.getBbWidth() * 0.5D, this.getY() + 0.05D + this.random.nextDouble(), this.getZ() + (this.random.nextDouble() * 2.0D - 1.0D) * (double) this.getBbWidth() * 0.5D, 0, 0, 0);
+			this.level().addParticle(ParticleTypes.SMOKE, true, this.getX() + (this.random.nextDouble() * 2.0D - 1.0D) * (double) this.getBbWidth() * 0.5D, this.getY() + 0.05D + this.random.nextDouble(), this.getZ() + (this.random.nextDouble() * 2.0D - 1.0D) * (double) this.getBbWidth() * 0.5D, 0, 0, 0);
 		}
 	}
 
 	private void spawnLightSource(boolean isInWaterBlock) {
 		if (lightBlockPos == null) {
-			lightBlockPos = findFreeSpace(level, blockPosition(), 2);
+			lightBlockPos = findFreeSpace(level(), blockPosition(), 2);
 			if (lightBlockPos == null)
 				return;
-			level.setBlockAndUpdate(lightBlockPos, AzureLibMod.TICKING_LIGHT_BLOCK.defaultBlockState());
+			level().setBlockAndUpdate(lightBlockPos, AzureLibMod.TICKING_LIGHT_BLOCK.defaultBlockState());
 		} else if (checkDistance(lightBlockPos, blockPosition(), 2)) {
-			var blockEntity = level.getBlockEntity(lightBlockPos);
+			var blockEntity = level().getBlockEntity(lightBlockPos);
 			if (blockEntity instanceof TickingLightEntity)
 				((TickingLightEntity) blockEntity).refresh(isInWaterBlock ? 20 : 0);
 			else
@@ -132,18 +132,18 @@ public class DrakeFireProjectile extends AbstractHurtingProjectile {
 	protected void onHitBlock(BlockHitResult blockHitResult) {
 		BlockPos blockPos;
 		super.onHitBlock(blockHitResult);
-		if (this.level.isClientSide())
+		if (this.level().isClientSide())
 			return;
 		var entity = this.getOwner();
-		if ((!(entity instanceof Mob) || this.level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) && this.level.isEmptyBlock(blockPos = blockHitResult.getBlockPos().relative(blockHitResult.getDirection())))
-			this.level.setBlockAndUpdate(blockPos, BaseFireBlock.getState(this.level, blockPos));
+		if ((!(entity instanceof Mob) || this.level().getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) && this.level().isEmptyBlock(blockPos = blockHitResult.getBlockPos().relative(blockHitResult.getDirection())))
+			this.level().setBlockAndUpdate(blockPos, BaseFireBlock.getState(this.level(), blockPos));
 		this.remove(Entity.RemovalReason.DISCARDED);
 	}
 
 	@Override
 	protected void onHitEntity(EntityHitResult entityHitResult) {
 		super.onHitEntity(entityHitResult);
-		if (this.level.isClientSide())
+		if (this.level().isClientSide())
 			return;
 		var entity = entityHitResult.getEntity();
 		if (!(entity instanceof DrakeEntity))

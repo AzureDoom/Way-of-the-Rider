@@ -1,52 +1,52 @@
 {
-	"variants": {
-		"level=0": {
-			"model": "wotr:block/lightblock"
-		},
-		"level=1": {
-			"model": "wotr:block/lightblock"
-		},
-		"level=2": {
-			"model": "wotr:block/lightblock"
-		},
-		"level=3": {
-			"model": "wotr:block/lightblock"
-		},
-		"level=4": {
-			"model": "wotr:block/lightblock"
-		},
-		"level=5": {
-			"model": "wotr:block/lightblock"
-		},
-		"level=6": {
-			"model": "wotr:block/lightblock"
-		},
-		"level=7": {
-			"model": "wotr:block/lightblock"
-		},
-		"level=8": {
-			"model": "wotr:block/lightblock"
-		},
-		"level=9": {
-			"model": "wotr:block/lightblock"
-		},
-		"level=10": {
-			"model": "wotr:block/lightblock"
-		},
-		"level=11": {
-			"model": "wotr:block/lightblock"
-		},
-		"level=12": {
-			"model": "wotr:block/lightblock"
-		},
-		"level=13": {
-			"model": "wotr:block/lightblock"
-		},
-		"level=14": {
-			"model": "wotr:block/lightblock"
-		},
-		"level=15": {
-			"model": "wotr:block/lightblock"
-		}
-	}
+  "variants": {
+    "level=0": {
+      "model": "wotr:block/lightblock"
+    },
+    "level=1": {
+      "model": "wotr:block/lightblock"
+    },
+    "level=2": {
+      "model": "wotr:block/lightblock"
+    },
+    "level=3": {
+      "model": "wotr:block/lightblock"
+    },
+    "level=4": {
+      "model": "wotr:block/lightblock"
+    },
+    "level=5": {
+      "model": "wotr:block/lightblock"
+    },
+    "level=6": {
+      "model": "wotr:block/lightblock"
+    },
+    "level=7": {
+      "model": "wotr:block/lightblock"
+    },
+    "level=8": {
+      "model": "wotr:block/lightblock"
+    },
+    "level=9": {
+      "model": "wotr:block/lightblock"
+    },
+    "level=10": {
+      "model": "wotr:block/lightblock"
+    },
+    "level=11": {
+      "model": "wotr:block/lightblock"
+    },
+    "level=12": {
+      "model": "wotr:block/lightblock"
+    },
+    "level=13": {
+      "model": "wotr:block/lightblock"
+    },
+    "level=14": {
+      "model": "wotr:block/lightblock"
+    },
+    "level=15": {
+      "model": "wotr:block/lightblock"
+    }
+  }
 }

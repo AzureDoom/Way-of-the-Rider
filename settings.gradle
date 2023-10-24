@@ -6,6 +6,7 @@ pluginManagement {
         }
         mavenCentral()
         gradlePluginPortal()
+        maven { url = 'https://plugins.gradle.org/m2/' }
     }
 }
-rootProject.name = 'way-of-the-rider-1.19'
+rootProject.name = 'way-of-the-rider-1.20'

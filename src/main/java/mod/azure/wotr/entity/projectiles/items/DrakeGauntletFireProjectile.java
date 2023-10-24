@@ -126,11 +126,11 @@ public class DrakeGauntletFireProjectile extends AbstractArrow implements GeoEnt
 		++this.ticksInAir;
 		if (this.ticksInAir >= 40)
 			this.remove(Entity.RemovalReason.DISCARDED);
-		var isInsideWaterBlock = level.isWaterAt(blockPosition());
+		var isInsideWaterBlock = level().isWaterAt(blockPosition());
 		spawnLightSource(isInsideWaterBlock);
-		if (this.level.isClientSide()) {
-			this.level.addParticle(ParticleTypes.FLAME, true, this.getX() + (this.random.nextDouble() * 2.0D - 1.0D) * (double) this.getBbWidth() * 0.5D, this.getY() + 0.05D + this.random.nextDouble(), this.getZ() + (this.random.nextDouble() * 2.0D - 1.0D) * (double) this.getBbWidth() * 0.5D, 0, 0, 0);
-			this.level.addParticle(ParticleTypes.SMOKE, true, this.getX() + (this.random.nextDouble() * 2.0D - 1.0D) * (double) this.getBbWidth() * 0.5D, this.getY() + 0.05D + this.random.nextDouble(), this.getZ() + (this.random.nextDouble() * 2.0D - 1.0D) * (double) this.getBbWidth() * 0.5D, 0, 0, 0);
+		if (this.level().isClientSide()) {
+			this.level().addParticle(ParticleTypes.FLAME, true, this.getX() + (this.random.nextDouble() * 2.0D - 1.0D) * (double) this.getBbWidth() * 0.5D, this.getY() + 0.05D + this.random.nextDouble(), this.getZ() + (this.random.nextDouble() * 2.0D - 1.0D) * (double) this.getBbWidth() * 0.5D, 0, 0, 0);
+			this.level().addParticle(ParticleTypes.SMOKE, true, this.getX() + (this.random.nextDouble() * 2.0D - 1.0D) * (double) this.getBbWidth() * 0.5D, this.getY() + 0.05D + this.random.nextDouble(), this.getZ() + (this.random.nextDouble() * 2.0D - 1.0D) * (double) this.getBbWidth() * 0.5D, 0, 0, 0);
 		}
 		var aabb = new AABB(this.blockPosition().above()).inflate(1D, 5D, 1D);
 		this.getCommandSenderWorld().getEntities(this, aabb).forEach(e -> {
@@ -169,12 +169,12 @@ public class DrakeGauntletFireProjectile extends AbstractArrow implements GeoEnt
 	@Override
 	protected void onHitBlock(BlockHitResult blockHitResult) {
 		super.onHitBlock(blockHitResult);
-		if (!this.level.isClientSide()) {
+		if (!this.level().isClientSide()) {
 			var entity = this.getOwner();
-			if (entity == null || !(entity instanceof Mob) || this.level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) {
+			if (entity == null || !(entity instanceof Mob) || this.level().getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) {
 				var blockPos = blockHitResult.getBlockPos().relative(blockHitResult.getDirection());
-				if (this.level.isEmptyBlock(blockPos))
-					this.level.setBlockAndUpdate(blockPos, BaseFireBlock.getState(this.level, blockPos));
+				if (this.level().isEmptyBlock(blockPos))
+					this.level().setBlockAndUpdate(blockPos, BaseFireBlock.getState(this.level(), blockPos));
 			}
 			this.remove(Entity.RemovalReason.DISCARDED);
 		}
@@ -184,7 +184,7 @@ public class DrakeGauntletFireProjectile extends AbstractArrow implements GeoEnt
 	@Override
 	protected void onHitEntity(EntityHitResult entityHitResult) {
 		super.onHitEntity(entityHitResult);
-		if (!this.level.isClientSide())
+		if (!this.level().isClientSide())
 			this.remove(Entity.RemovalReason.DISCARDED);
 	}
 
@@ -206,12 +206,12 @@ public class DrakeGauntletFireProjectile extends AbstractArrow implements GeoEnt
 
 	private void spawnLightSource(boolean isInWaterBlock) {
 		if (lightBlockPos == null) {
-			lightBlockPos = findFreeSpace(level, blockPosition(), 2);
+			lightBlockPos = findFreeSpace(level(), blockPosition(), 2);
 			if (lightBlockPos == null)
 				return;
-			level.setBlockAndUpdate(lightBlockPos, AzureLibMod.TICKING_LIGHT_BLOCK.defaultBlockState());
+			level().setBlockAndUpdate(lightBlockPos, AzureLibMod.TICKING_LIGHT_BLOCK.defaultBlockState());
 		} else if (checkDistance(lightBlockPos, blockPosition(), 2)) {
-			var blockEntity = level.getBlockEntity(lightBlockPos);
+			var blockEntity = level().getBlockEntity(lightBlockPos);
 			if (blockEntity instanceof TickingLightEntity)
 				((TickingLightEntity) blockEntity).refresh(isInWaterBlock ? 20 : 0);
 			else

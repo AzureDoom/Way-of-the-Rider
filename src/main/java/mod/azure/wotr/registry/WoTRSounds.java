@@ -7,5 +7,5 @@ import net.minecraft.sounds.SoundEvent;
 
 public class WoTRSounds {
 
-	public static SoundEvent DRAKE_IDLE = Registry.register(BuiltInRegistries.SOUND_EVENT, WoTRMod.modResource("drake_idle"), SoundEvent.createVariableRangeEvent(WoTRMod.modResource("drake_idle")));
+    public static SoundEvent DRAKE_IDLE = Registry.register(BuiltInRegistries.SOUND_EVENT, WoTRMod.modResource("drake_idle"), SoundEvent.createVariableRangeEvent(WoTRMod.modResource("drake_idle")));
 }

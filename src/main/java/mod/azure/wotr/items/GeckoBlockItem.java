@@ -19,7 +19,6 @@ public class GeckoBlockItem extends BlockItem implements GeoItem {
 
 	private final AnimatableInstanceCache cache = AzureLibUtil.createInstanceCache(this);
 	private final Supplier<Object> renderProvider = GeoItem.makeRenderer(this);
-	public String controllerName = "controller";
 
 	public GeckoBlockItem(Block block, Properties settings) {
 		super(block, settings);

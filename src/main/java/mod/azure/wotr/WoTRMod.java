@@ -16,6 +16,11 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.CreativeModeTab;
@@ -30,15 +35,7 @@ public class WoTRMod implements ModInitializer {
 	public static WoTREntities ENTITIES;
 	public static final String MODID = "wotr";
 	public static final ResourceLocation RELOAD = new ResourceLocation(MODID, "reload");
-	public static final CreativeModeTab GENERAL = FabricItemGroup.builder(new ResourceLocation(WoTRMod.MODID, "wotr")).icon(() -> new ItemStack(WoTRItems.DRAKE_SKULL)).displayItems((context, entries) -> {
-		entries.accept(WoTRItems.DRAKE_SKULL);
-		entries.accept(WoTRItems.DRAKE_GAUNTLET);
-		entries.accept(WoTRItems.DRAKE_ARMOR_IRON);
-		entries.accept(WoTRItems.DRAKE_ARMOR_GOLD);
-		entries.accept(WoTRItems.DRAKE_ARMOR_DIAMOND);
-		entries.accept(WoTRItems.DRAKE_SPAWN_EGG);
-		entries.accept(WoTRItems.LUNG_SERPENT_SPAWN_EGG);
-	}).build();
+	public static final ResourceKey<CreativeModeTab> GENERAL = ResourceKey.create(Registries.CREATIVE_MODE_TAB, modResource("wotr"));
 
 	public static final ResourceLocation modResource(String name) {
 		return new ResourceLocation(MODID, name);
@@ -58,6 +55,16 @@ public class WoTRMod implements ModInitializer {
 			if (player.getMainHandItem().getItem() instanceof DrakeGauntletItem)
 				((DrakeGauntletItem) player.getMainHandItem().getItem()).reload(player, InteractionHand.MAIN_HAND);
 		});
-		AzureLib.initialize();
+		Registry.register(BuiltInRegistries.CREATIVE_MODE_TAB, GENERAL, FabricItemGroup.builder().icon(() -> new ItemStack(WoTRItems.DRAKE_SKULL)) // icon
+				.title(Component.translatable("itemGroup.wotr.wotr")) // title
+				.displayItems((context, entries) -> {
+					entries.accept(WoTRItems.DRAKE_SKULL);
+					entries.accept(WoTRItems.DRAKE_GAUNTLET);
+					entries.accept(WoTRItems.DRAKE_ARMOR_IRON);
+					entries.accept(WoTRItems.DRAKE_ARMOR_GOLD);
+					entries.accept(WoTRItems.DRAKE_ARMOR_DIAMOND);
+					entries.accept(WoTRItems.DRAKE_SPAWN_EGG);
+					entries.accept(WoTRItems.LUNG_SERPENT_SPAWN_EGG);
+				}).build());
 	}
 }

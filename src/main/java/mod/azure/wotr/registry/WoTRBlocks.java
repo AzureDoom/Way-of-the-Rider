@@ -7,6 +7,6 @@ import net.minecraft.core.registries.BuiltInRegistries;
 
 public class WoTRBlocks {
 
-	public static final DrakeSkullBlock DRAKE_SKULL = Registry.register(BuiltInRegistries.BLOCK, WoTRMod.modResource("drake_skull"), new DrakeSkullBlock());
+    public static final DrakeSkullBlock DRAKE_SKULL = Registry.register(BuiltInRegistries.BLOCK, WoTRMod.modResource("drake_skull"), new DrakeSkullBlock());
 
 }

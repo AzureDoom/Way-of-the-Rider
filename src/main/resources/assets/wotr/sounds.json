@@ -1,9 +1,9 @@
 {
-	"drake_idle": {
-		"sounds": [
-			{
-				"name": "wotr:drake_idle"
-			}
-		]
-	}
+  "drake_idle": {
+    "sounds": [
+      {
+        "name": "wotr:drake_idle"
+      }
+    ]
+  }
 }

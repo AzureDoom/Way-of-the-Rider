@@ -55,7 +55,7 @@ public abstract class CustomRangedDelayedBehaviour<E extends WoTREntity> extends
 
 	@Override
 	protected boolean shouldKeepRunning(E entity) {
-		return this.delayFinishedAt >= entity.level.getGameTime();
+		return this.delayFinishedAt >= entity.level().getGameTime();
 	}
 
 	@Override

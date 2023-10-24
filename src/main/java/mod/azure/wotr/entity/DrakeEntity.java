@@ -67,9 +67,9 @@ public class DrakeEntity extends WoTREntity implements Growable {
 	@Override
 	public void registerControllers(ControllerRegistrar controllers) {
 		controllers.add(new AnimationController<>(this, "idle_controller", 0, event -> {
-			if (!(this.entityData.get(STATE) == 1) && (walkAnimation.speed() < 0.65F && !(walkAnimation.speed() > -0.10F && walkAnimation.speed() < 0.02F)) && this.onGround && !this.hurtMarked)
+			if (!(this.entityData.get(STATE) == 1) && (walkAnimation.speed() < 0.65F && !(walkAnimation.speed() > -0.10F && walkAnimation.speed() < 0.02F)) && this.onGround() && !this.hurtMarked)
 				return event.setAndContinue(RawAnimation.begin().thenLoop("moving"));
-			if (!(this.entityData.get(STATE) == 1) && walkAnimation.speed() >= 0.65F && this.onGround && !this.wasEyeInWater && !this.hurtMarked)
+			if (!(this.entityData.get(STATE) == 1) && walkAnimation.speed() >= 0.65F && this.onGround() && !this.wasEyeInWater && !this.hurtMarked)
 				return event.setAndContinue(RawAnimation.begin().thenLoop("running"));
 //			if (!this.onGround && !this.wasTouchingWater
 //					&& !(this.dead || this.getHealth() < 0.01 || this.isDeadOrDying()))
@@ -86,7 +86,7 @@ public class DrakeEntity extends WoTREntity implements Growable {
 
 	@Override
 	public BrainActivityGroup<WoTREntity> getFightTasks() {
-		return BrainActivityGroup.fightTasks(new InvalidateAttackTarget<>().stopIf(target -> !target.isAlive() || target instanceof Player && ((Player) target).isCreative()), new SetWalkTargetToAttackTarget<>().speedMod(1.02F), new AnimatableMeleeAttack<>(15).whenStarting(entity -> setAggressive(true)).whenStarting(entity -> setAttackingState(2)).whenStopping(entity -> setAggressive(false)).whenStopping(entity -> setAttackingState(0)),
+		return BrainActivityGroup.fightTasks(new InvalidateAttackTarget<>().stopIf(target -> !target.isAlive() || target instanceof Player && ((Player) target).isCreative()), new SetWalkTargetToAttackTarget<>().speedMod((owner, target) -> 1.02F), new AnimatableMeleeAttack<>(15).whenStarting(entity -> setAggressive(true)).whenStarting(entity -> setAttackingState(2)).whenStopping(entity -> setAggressive(false)).whenStopping(entity -> setAttackingState(0)),
 				new FireProjectileAttack<>(13).whenStarting(entity -> setAggressive(true)).whenStopping(entity -> setAggressive(false)));
 	}
 
@@ -141,7 +141,7 @@ public class DrakeEntity extends WoTREntity implements Growable {
 	public void aiStep() {
 		super.aiStep();
 
-		if (!level.isClientSide() && this.isAlive())
+		if (!level().isClientSide() && this.isAlive())
 			grow(this, (this.tickCount / 24000) * 1);
 	}
 
@@ -184,7 +184,7 @@ public class DrakeEntity extends WoTREntity implements Growable {
 
 	@Override
 	protected void updateContainerEquipment() {
-		if (this.level.isClientSide())
+		if (this.level().isClientSide())
 			return;
 		super.updateContainerEquipment();
 		this.setArmorTypeFromStack(this.inventory.getItem(1));
@@ -193,7 +193,7 @@ public class DrakeEntity extends WoTREntity implements Growable {
 
 	private void setArmorTypeFromStack(ItemStack stack) {
 		this.equipArmor(stack);
-		if (!this.level.isClientSide()) {
+		if (!this.level().isClientSide()) {
 			int i;
 			this.getAttribute(Attributes.ARMOR).removeModifier(HORSE_ARMOR_BONUS_ID);
 			if (this.isArmor(stack) && (i = ((DrakeArmorItem) stack.getItem()).getBonus()) != 0)
@@ -227,7 +227,7 @@ public class DrakeEntity extends WoTREntity implements Growable {
 		if (!this.isBaby()) {
 			if (player.isSecondaryUseActive()) {
 				this.openCustomInventoryScreen(player);
-				return InteractionResult.sidedSuccess(this.level.isClientSide);
+				return InteractionResult.sidedSuccess(this.level().isClientSide);
 			}
 			if (this.isVehicle())
 				return super.mobInteract(player, hand);
@@ -239,7 +239,7 @@ public class DrakeEntity extends WoTREntity implements Growable {
 			var bl = !this.isBaby() && !this.isSaddled() && itemStack.is(Items.SADDLE) && this.getGrowth() >= this.getMaxGrowth();
 			if (this.isArmor(itemStack) || bl) {
 				this.openCustomInventoryScreen(player);
-				return InteractionResult.sidedSuccess(this.level.isClientSide);
+				return InteractionResult.sidedSuccess(this.level().isClientSide);
 			}
 			if (this.isFood(itemStack) && this.getHealth() < this.getMaxHealth())
 				this.heal(item.getFoodProperties().getNutrition());
@@ -250,7 +250,7 @@ public class DrakeEntity extends WoTREntity implements Growable {
 			return super.mobInteract(player, hand);
 		if (this.isSaddled())
 			this.doPlayerRide(player);
-		return InteractionResult.sidedSuccess(this.level.isClientSide);
+		return InteractionResult.sidedSuccess(this.level().isClientSide);
 	}
 
 	@Override
@@ -316,7 +316,7 @@ public class DrakeEntity extends WoTREntity implements Growable {
 			g *= 0.25f;
 			this.gallopSoundCounter = 0;
 		}
-		if (this.playerJumpPendingScale > 0.0f && !this.isJumping() && this.onGround) {
+		if (this.playerJumpPendingScale > 0.0f && !this.isJumping() && this.onGround()) {
 			var d = this.getCustomJump() * (double) this.playerJumpPendingScale * (double) this.getBlockJumpFactor();
 			var e = d + this.getJumpBoostPower();
 			var vec3d = this.getDeltaMovement();
@@ -335,7 +335,7 @@ public class DrakeEntity extends WoTREntity implements Growable {
 			super.travel(new Vec3(f, movementInput.y, g));
 		} else if (livingEntity instanceof Player)
 			this.setDeltaMovement(Vec3.ZERO);
-		if (this.onGround) {
+		if (this.onGround()) {
 			this.playerJumpPendingScale = 0.0f;
 			this.setIsJumping(false);
 		}
@@ -344,7 +344,7 @@ public class DrakeEntity extends WoTREntity implements Growable {
 
 	@Override
 	public void openCustomInventoryScreen(Player player) {
-		if (!this.level.isClientSide() && (!this.isVehicle() || this.hasPassenger(player)))
+		if (!this.level().isClientSide() && (!this.isVehicle() || this.hasPassenger(player)))
 			player.openHorseInventory(this, this.inventory);
 	}
 
@@ -398,9 +398,9 @@ public class DrakeEntity extends WoTREntity implements Growable {
 
 	@Override
 	protected void playStepSound(BlockPos pos, BlockState state) {
-		if (state.getMaterial().isLiquid())
+		if (state.liquid())
 			return;
-		var blockState = this.level.getBlockState(pos.above());
+		var blockState = this.level().getBlockState(pos.above());
 		var blockSoundGroup = state.getSoundType();
 		if (blockState.is(Blocks.SNOW))
 			blockSoundGroup = blockState.getSoundType();

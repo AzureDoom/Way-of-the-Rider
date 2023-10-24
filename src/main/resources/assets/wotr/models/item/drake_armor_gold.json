@@ -1,6 +1,6 @@
 {
-	"parent": "item/generated",
-	"textures": {
-		"layer0": "wotr:item/drake_armor_gold"
-	}
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "wotr:item/drake_armor_gold"
+  }
 }
