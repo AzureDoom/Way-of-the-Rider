@@ -2,6 +2,10 @@ package mod.azure.wotr.entity;
 
 import java.util.function.Predicate;
 
+import com.mojang.authlib.minecraft.client.MinecraftClient;
+import net.fabricmc.loader.impl.lib.sat4j.core.Vec;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
 import mod.azure.azurelib.core.animation.AnimatableManager.ControllerRegistrar;
@@ -36,6 +40,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Vector2d;
+import org.joml.Vector2f;
 
 public class LungSerpentEntity extends WoTREntity implements Growable {
 
@@ -250,10 +256,13 @@ public class LungSerpentEntity extends WoTREntity implements Growable {
 		this.setXRot(livingEntity.getXRot() * 0.5f);
 		this.setRot(this.getYRot(), this.getXRot());
 		this.yHeadRot = this.yBodyRot = this.getYRot();
-		var f = livingEntity.xxa * 0.5f;
-		var g = livingEntity.zza;
-		if (g <= 0.0f) {
-			g *= 0.25f;
+		var mx = livingEntity.xxa * 0.5f;
+		var mz = livingEntity.zza;
+		var my = Math.sin(Math.toRadians(-livingEntity.getXRot()/2)) * mz;// movementInput.y
+
+		//Minecraft.getInstance().gui.getChat().addMessage(Component.literal(String.valueOf("%f %f %f".formatted(mx,my,mz))));
+		if (mz <= 0.0f) {
+			mz *= 0.25f;
 			this.gallopSoundCounter = 0;
 		}
 		if (this.playerJumpPendingScale > 0.0f && !this.isJumping() && this.onGround()) {
@@ -263,7 +272,7 @@ public class LungSerpentEntity extends WoTREntity implements Growable {
 			this.setDeltaMovement(vec3d.x, e * this.playerJumpPendingScale, vec3d.z);
 			this.setIsJumping(true);
 			this.hasImpulse = true;
-			if (g > 0.0f) {
+			if (mz > 0.0f) {
 				float h = Mth.sin(this.getYRot() * ((float) Math.PI / 180));
 				float i = Mth.cos(this.getYRot() * ((float) Math.PI / 180));
 				this.setDeltaMovement(this.getDeltaMovement().add(-3.8f * h * this.playerJumpPendingScale, 1.0 * this.playerJumpPendingScale, 3.8f * i * this.playerJumpPendingScale));
@@ -272,7 +281,7 @@ public class LungSerpentEntity extends WoTREntity implements Growable {
 		}
 		if (this.isControlledByLocalInstance()) {
 			this.setSpeed((float) this.getAttributeValue(Attributes.MOVEMENT_SPEED));
-			super.travel(new Vec3(f, movementInput.y, g));
+			super.travel(new Vec3(mx, my, mz));
 		} else if (livingEntity instanceof Player)
 			this.setDeltaMovement(Vec3.ZERO);
 		this.playerJumpPendingScale = 0.0f;
