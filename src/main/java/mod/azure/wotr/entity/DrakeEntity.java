@@ -3,6 +3,7 @@ package mod.azure.wotr.entity;
 import java.util.UUID;
 import java.util.function.Predicate;
 
+import mod.azure.wotr.entity.tasks.FollowNearestPlayer;
 import org.jetbrains.annotations.Nullable;
 
 import mod.azure.azurelib.core.animation.AnimatableManager.ControllerRegistrar;
@@ -30,6 +31,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.SlotAccess;
 import net.minecraft.world.entity.SpawnGroupData;
@@ -82,6 +84,11 @@ public class DrakeEntity extends WoTREntity implements Growable {
 				return event.setAndContinue(RawAnimation.begin().thenPlayAndHold("death"));
 			return event.setAndContinue(RawAnimation.begin().thenLoop("idle"));
 		}));
+	}
+
+	@Override
+	public BrainActivityGroup<WoTREntity> getIdleTasks() {
+		return super.getIdleTasks().behaviours(new FollowNearestPlayer<>().closeEnoughDist((drake, nearestPlayer) -> 6f).closeEnoughAction(AbstractHorse::tameWithName).startCondition(AgeableMob::isBaby).stopIf(AbstractHorse::isTamed));
 	}
 
 	@Override
