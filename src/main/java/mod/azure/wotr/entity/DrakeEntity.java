@@ -86,7 +86,7 @@ public class DrakeEntity extends WoTREntity implements Growable {
 
 	@Override
 	public BrainActivityGroup<WoTREntity> getFightTasks() {
-		return BrainActivityGroup.fightTasks(new InvalidateAttackTarget<>().invalidateIf((drake, target) -> !target.isAlive() || target instanceof Player player && (player.isCreative() || player.isSpectator())), new SetWalkTargetToAttackTarget<>().speedMod((owner, target) -> 1.02F), new AnimatableMeleeAttack<>(15).whenStarting(entity -> setAggressive(true)).whenStarting(entity -> setAttackingState(2)).whenStopping(entity -> setAggressive(false)).whenStopping(entity -> setAttackingState(0)),
+		return BrainActivityGroup.fightTasks(new InvalidateAttackTarget<DrakeEntity>().invalidateIf((drake, target) -> !target.isAlive() || target instanceof Player player && (player.isCreative() || player.isSpectator() || player.equals(drake.getOwner()))), new SetWalkTargetToAttackTarget<>().speedMod((owner, target) -> 1.02F), new AnimatableMeleeAttack<>(15).whenStarting(entity -> setAggressive(true)).whenStarting(entity -> setAttackingState(2)).whenStopping(entity -> setAggressive(false)).whenStopping(entity -> setAttackingState(0)),
 				new FireProjectileAttack<>(13).whenStarting(entity -> setAggressive(true)).whenStopping(entity -> setAggressive(false)));
 	}
 
