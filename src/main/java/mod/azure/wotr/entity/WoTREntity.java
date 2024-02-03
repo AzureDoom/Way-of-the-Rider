@@ -100,7 +100,7 @@ public abstract class WoTREntity extends AbstractHorse implements GeoEntity, Sma
 
     @Override
     public BrainActivityGroup<WoTREntity> getFightTasks() {
-        return BrainActivityGroup.fightTasks(new InvalidateAttackTarget<>().stopIf(target -> !target.isAlive() || target instanceof Player && ((Player) target).isCreative()), new SetWalkTargetToAttackTarget<>().speedMod((owner, target) -> 0.5F));
+        return BrainActivityGroup.fightTasks(new InvalidateAttackTarget<>().invalidateIf((drake, target) -> !target.isAlive() || target instanceof Player player && (player.isCreative() || player.isSpectator())), new SetWalkTargetToAttackTarget<>().speedMod((owner, target) -> 0.5F));
     }
 
     @Override
