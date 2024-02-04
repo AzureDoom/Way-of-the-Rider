@@ -3,6 +3,7 @@ package mod.azure.wotr.entity;
 import java.util.UUID;
 import java.util.function.Predicate;
 
+import mod.azure.wotr.entity.tasks.FollowNearestPlayer;
 import org.jetbrains.annotations.Nullable;
 
 import mod.azure.azurelib.core.animation.AnimatableManager.ControllerRegistrar;
@@ -30,6 +31,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.SlotAccess;
 import net.minecraft.world.entity.SpawnGroupData;
@@ -85,8 +87,13 @@ public class DrakeEntity extends WoTREntity implements Growable {
 	}
 
 	@Override
+	public BrainActivityGroup<WoTREntity> getIdleTasks() {
+		return super.getIdleTasks().behaviours(new FollowNearestPlayer<>().closeEnoughDist((drake, nearestPlayer) -> 6f).closeEnoughAction(AbstractHorse::tameWithName).startCondition(AgeableMob::isBaby).stopIf(AbstractHorse::isTamed));
+	}
+
+	@Override
 	public BrainActivityGroup<WoTREntity> getFightTasks() {
-		return BrainActivityGroup.fightTasks(new InvalidateAttackTarget<>().stopIf(target -> !target.isAlive() || target instanceof Player && ((Player) target).isCreative()), new SetWalkTargetToAttackTarget<>().speedMod((owner, target) -> 1.02F), new AnimatableMeleeAttack<>(15).whenStarting(entity -> setAggressive(true)).whenStarting(entity -> setAttackingState(2)).whenStopping(entity -> setAggressive(false)).whenStopping(entity -> setAttackingState(0)),
+		return BrainActivityGroup.fightTasks(new InvalidateAttackTarget<DrakeEntity>().invalidateIf((drake, target) -> !target.isAlive() || target instanceof Player player && (player.isCreative() || player.isSpectator() || player.equals(drake.getOwner()))), new SetWalkTargetToAttackTarget<>().speedMod((owner, target) -> 1.02F), new AnimatableMeleeAttack<>(15).whenStarting(entity -> setAggressive(true)).whenStarting(entity -> setAttackingState(2)).whenStopping(entity -> setAggressive(false)).whenStopping(entity -> setAttackingState(0)),
 				new FireProjectileAttack<>(13).whenStarting(entity -> setAggressive(true)).whenStopping(entity -> setAggressive(false)));
 	}
 
